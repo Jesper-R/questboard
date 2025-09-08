@@ -1,13 +1,10 @@
 "use client";
 
-import { SignUp, SignIn } from "@clerk/nextjs";
-import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import ClerkLandingPageModal from "@/components/ClerkLandingPageModal";
+import { useState, useEffect, Suspense } from "react";
 import UnicornScene from "unicornstudio-react";
 
 export default function Home() {
-  const searchParams = useSearchParams();
-  const clerkAction = searchParams.get("action") || "sign-up";
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -33,11 +30,9 @@ export default function Home() {
         />
       </div>
 
-      {clerkAction === "sign-up" ? (
-        <SignUp routing="virtual" signInUrl="/?action=sign-in" />
-      ) : (
-        <SignIn routing="virtual" signUpUrl="/" />
-      )}
+      <Suspense fallback={<div>Loading</div>}>
+        <ClerkLandingPageModal />
+      </Suspense>
     </div>
   );
 }
