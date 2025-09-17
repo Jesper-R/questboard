@@ -1,6 +1,5 @@
 import ClerkAuthForm from "@/components/ClerkAuthForm";
 import UnicornBackground from "@/components/UnicornStudioBackground";
-import { SignIn, SignUp } from "@clerk/nextjs";
 
 const page = () => {
   return (
