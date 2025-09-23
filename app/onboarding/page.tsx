@@ -1,7 +1,7 @@
 import ClerkAuthForm from "@/components/ClerkAuthForm";
 import UnicornBackground from "@/components/UnicornStudioBackground";
 
-const page = () => {
+const OnboardingPage = () => {
   return (
     <div className="min-h-screen flex justify-center items-center">
       <UnicornBackground />
@@ -10,4 +10,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default OnboardingPage;
