@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Clock, Calendar, CheckCircle } from "lucide-react";
+import EditQuestDialog from "@/components/EditQuestDialog";
 
 interface QuestCardProps {
   title: string;
@@ -67,18 +68,30 @@ export default function QuestCard({
           {type === "weekly" && dueDay && (
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>{dueDay}</span>
+              <span>{dueDay?.charAt(0).toUpperCase() + dueDay?.slice(1)}</span>
             </div>
           )}
         </div>
         <div className="gap-1 flex">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-gray-400 hover:text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+          <EditQuestDialog
+            quest={{
+              title,
+              description,
+              type,
+              difficulty,
+              dueTime,
+              dueDay,
+              dueDate,
+            }}
           >
-            Edit
-          </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-gray-400 hover:text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            >
+              Edit
+            </Button>
+          </EditQuestDialog>
           <Button
             size="sm"
             variant={isCompleted ? "ghost" : "default"}

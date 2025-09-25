@@ -38,7 +38,7 @@ const mockQuests = [
       "Complete one chapter from the TypeScript handbook and practice with examples Complete one chapter from the TypeScript handbook and practice with examples Complete one chapter from the TypeScript handbook and practice with examples",
     type: "weekly" as const,
     difficulty: "hard" as const,
-    dueDay: "Friday",
+    dueDay: "friday",
     isCompleted: false,
   },
   {
