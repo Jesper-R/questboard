@@ -38,11 +38,13 @@ export default function Navbar() {
                   >
                     <div className="relative w-10 h-10">
                       <Image
-                        src={user?.imageUrl || "/icons/loading.png"}
+                        // src={user?.imageUrl || "/icons/loading.png"}
+                        src={"/avatars/default.png"}
                         alt="User Avatar"
                         width={32}
                         height={32}
                         className="absolute top-1 left-1"
+                        style={{ imageRendering: "pixelated" }}
                       />
                       <Image
                         src="/borders/wood.png"
