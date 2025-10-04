@@ -21,22 +21,70 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { Quest, QuestInsert } from "@/lib/supabase/models";
 
 interface CreateQuestDialogProps {
   children: ReactNode;
+  createQuest: (questData: Omit<QuestInsert, "user_id">) => Promise<Quest>;
 }
 
 export default function CreateQuestDialog({
   children,
+  createQuest,
 }: CreateQuestDialogProps) {
   const [questType, setQuestType] = useState("daily");
+  const [difficulty, setDifficulty] = useState<
+    "easy" | "medium" | "hard" | "epic"
+  >("easy");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [time, setTime] = useState("");
+  const [dayOfWeek, setDayOfWeek] = useState("");
   const [date, setDate] = useState<Date>();
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await createQuest({
+        title: title.trim(),
+        description: description.trim(),
+        type: questType as "daily" | "weekly" | "onetime",
+        difficulty,
+        due_time: questType === "daily" ? time : undefined,
+        due_day: questType === "weekly" ? dayOfWeek : undefined,
+        due_date:
+          questType === "onetime" && date ? date.toISOString() : undefined,
+      });
+
+      setTitle("");
+      setDescription("");
+      setTime("");
+      setDayOfWeek("");
+      setDate(undefined);
+      setQuestType("daily");
+      setDifficulty("easy");
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to create quest:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="bg-[#1a1a1a] ">
         <DialogHeader>
@@ -45,21 +93,31 @@ export default function CreateQuestDialog({
             Plan your next quest to earn valuable xp and coins!
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="quest-title" className="text-sm font-medium">Quest Title</Label>
+            <Label htmlFor="quest-title" className="text-sm font-medium">
+              Quest Title
+            </Label>
             <Input
               id="quest-title"
               type="text"
               placeholder="Enter quest title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="quest-description" className="text-sm font-medium">Description</Label>
+            <Label htmlFor="quest-description" className="text-sm font-medium">
+              Description
+            </Label>
             <Textarea
               id="quest-description"
               className="h-30 max-h-48 resize-y"
               placeholder="Enter quest description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -78,15 +136,22 @@ export default function CreateQuestDialog({
             </div>
             <div className="grid gap-2">
               <Label className="text-sm font-medium">Difficulty</Label>
-              <Select>
+              <Select
+                value={difficulty}
+                onValueChange={(value) =>
+                  setDifficulty(value as "easy" | "medium" | "hard" | "epic")
+                }
+              >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select difficulty" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                  <SelectItem value="epic">Epic</SelectItem>
+                  <SelectItem value="easy">Easy (10 XP, 5 coins)</SelectItem>
+                  <SelectItem value="medium">
+                    Medium (25 XP, 10 coins)
+                  </SelectItem>
+                  <SelectItem value="hard">Hard (50 XP, 20 coins)</SelectItem>
+                  <SelectItem value="epic">Epic (100 XP, 50 coins)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -94,10 +159,14 @@ export default function CreateQuestDialog({
 
           {questType === "daily" && (
             <div className="grid gap-2">
-              <Label htmlFor="daily-time" className="text-sm font-medium">Daily Time</Label>
+              <Label htmlFor="daily-time" className="text-sm font-medium">
+                Daily Time
+              </Label>
               <Input
                 id="daily-time"
                 type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
               />
             </div>
           )}
@@ -105,7 +174,7 @@ export default function CreateQuestDialog({
           {questType === "weekly" && (
             <div className="grid gap-2">
               <Label className="text-sm font-medium">Day of Week</Label>
-              <Select>
+              <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select day" />
                 </SelectTrigger>
@@ -129,30 +198,38 @@ export default function CreateQuestDialog({
                 <PopoverTrigger asChild>
                   <Button
                     variant={"outline"}
-                    className={`w-full justify-start text-left font-normal ${!date ? "text-muted-foreground" : ""}`}
+                    className={`w-full justify-start text-left font-normal ${
+                      !date ? "text-muted-foreground" : ""
+                    }`}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-auto p-0 ">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                  />
+                  <Calendar mode="single" selected={date} onSelect={setDate} />
                 </PopoverContent>
               </Popover>
             </div>
           )}
 
           <div className="flex gap-2 justify-end mt-6">
-            <Button variant="outline">Cancel</Button>
-            <Button className="bg-[#E6C100] text-black hover:bg-[#E6C100]/90">
-              Create Quest
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-[#E6C100] text-black hover:bg-[#E6C100]/90"
+              disabled={isSubmitting || !title.trim() || !description.trim()}
+            >
+              {isSubmitting ? "Creating..." : "Create Quest"}
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

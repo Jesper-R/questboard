@@ -3,6 +3,8 @@ export interface User {
   clerk_user_id: string;
   username: string | null;
   email: string | null;
+  avatar_path: string | null;
+  user_title: string;
   level: number;
   xp: number;
   coins: number;
@@ -21,6 +23,8 @@ export interface UserInsert {
   clerk_user_id: string;
   username?: string;
   email?: string;
+  avatar_path?: string;
+  user_title?: string;
   level?: number;
   xp?: number;
   coins?: number;
@@ -31,4 +35,38 @@ export interface UserInsert {
   daily_quests_completed?: number;
   weekly_quests_completed?: number;
   onetime_quests_completed?: number;
+}
+
+export interface Quest {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  type: "daily" | "weekly" | "onetime";
+  difficulty: "easy" | "medium" | "hard" | "epic";
+  is_completed: boolean;
+  is_expired: boolean;
+  due_time?: string;
+  due_day?: string;
+  due_date?: string;
+  xp_reward: number;
+  coin_reward: number;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuestInsert {
+  user_id: string;
+  title: string;
+  description: string;
+  type: "daily" | "weekly" | "onetime";
+  difficulty: "easy" | "medium" | "hard" | "epic";
+  is_completed?: boolean;
+  is_expired?: boolean;
+  due_time?: string;
+  due_day?: string;
+  due_date?: string;
+  xp_reward?: number;
+  coin_reward?: number;
 }

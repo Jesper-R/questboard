@@ -2,6 +2,7 @@
 
 import { useUser, useClerk } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import { useUserData } from "@/lib/hooks/useUserData";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +16,12 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { user: userData } = useUserData();
   const isDashboard = pathname.startsWith("/dashboard");
 
   if (isDashboard) {
     return (
-      <nav className="sticky top-0 bg-[#151515]">
+      <nav className="sticky top-0 bg-[#151515] z-50">
         <div className="container mx-auto py-3 px-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-4xl font-jacquard text-[#E6C100]">
@@ -38,8 +40,7 @@ export default function Navbar() {
                   >
                     <div className="relative w-10 h-10">
                       <Image
-                        // src={user?.imageUrl || "/icons/loading.png"}
-                        src={"/avatars/default.png"}
+                        src={userData?.avatar_path || "/avatars/default.png"}
                         alt="User Avatar"
                         width={32}
                         height={32}
@@ -57,12 +58,14 @@ export default function Navbar() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-white font-medium text-sm">
-                        {user?.firstName || "User"}
+                        {userData?.username || user?.firstName || "User"}
                       </span>
                       <div className="flex items-center space-x-1">
-                        <span className="text-gray-400 text-xs">Level XX</span>
+                        <span className="text-gray-400 text-xs">
+                          Level {userData?.level || 1}
+                        </span>
                         <span className="text-[#E6C100] text-xs">
-                          Java Knight
+                          {userData?.user_title || "Adventurer"}
                         </span>
                       </div>
                     </div>

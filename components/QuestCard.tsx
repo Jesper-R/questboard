@@ -3,16 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Clock, Calendar, CheckCircle } from "lucide-react";
 import EditQuestDialog from "@/components/EditQuestDialog";
+import { Quest } from "@/lib/supabase/models";
+import { format } from "date-fns";
 
 interface QuestCardProps {
-  title: string;
-  description: string;
-  type: "daily" | "weekly" | "onetime";
-  difficulty: "easy" | "medium" | "hard" | "epic";
-  isCompleted?: boolean;
-  dueTime?: string;
-  dueDay?: string;
-  dueDate?: string;
+  quest: Quest;
+  updateQuest?: (questId: string, updates: Partial<Quest>) => Promise<Quest>;
+  deleteQuest?: (questId: string) => Promise<void>;
+  completeQuest?: (questId: string) => Promise<Quest>;
 }
 
 const difficultyColors = {
@@ -23,19 +21,26 @@ const difficultyColors = {
 };
 
 export default function QuestCard({
-  title,
-  description,
-  type,
-  difficulty,
-  isCompleted = false,
-  dueTime,
-  dueDay,
-  dueDate,
+  quest,
+  updateQuest,
+  deleteQuest,
+  completeQuest,
 }: QuestCardProps) {
+  const {
+    title,
+    description,
+    type,
+    difficulty,
+    is_completed: isCompleted = false,
+    is_expired: isExpired = false,
+    due_time: dueTime,
+    due_day: dueDay,
+    due_date: dueDate,
+  } = quest;
   return (
     <div
       className={`relative rounded-lg border-1 border-[#E6C100] bg-[#2a2a00]/20 p-4 transition-all hover:shadow-lg group ${
-        isCompleted ? "opacity-60" : ""
+        isCompleted || isExpired ? "opacity-60" : ""
       }`}
     >
       <div className="flex items-center gap-1 absolute top-3 right-3">
@@ -62,7 +67,7 @@ export default function QuestCard({
           {type === "onetime" && dueDate && (
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>{dueDate}</span>
+              <span>{format(new Date(dueDate), "MMM d, yyyy")}</span>
             </div>
           )}
           {type === "weekly" && dueDay && (
@@ -73,17 +78,12 @@ export default function QuestCard({
           )}
         </div>
         <div className="gap-1 flex">
-          <EditQuestDialog
-            quest={{
-              title,
-              description,
-              type,
-              difficulty,
-              dueTime,
-              dueDay,
-              dueDate,
-            }}
-          >
+          {updateQuest && deleteQuest && (
+            <EditQuestDialog
+              quest={quest}
+              updateQuest={updateQuest}
+              deleteQuest={deleteQuest}
+            >
             <Button
               size="sm"
               variant="ghost"
@@ -91,26 +91,54 @@ export default function QuestCard({
             >
               Edit
             </Button>
-          </EditQuestDialog>
-          <Button
-            size="sm"
-            variant={isCompleted ? "ghost" : "default"}
-            className={
-              isCompleted
-                ? ""
-                : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
-            }
-            disabled={isCompleted}
-          >
-            {isCompleted ? (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                Completed
-              </>
-            ) : (
-              "Complete"
-            )}
-          </Button>
+            </EditQuestDialog>
+          )}
+          {completeQuest ? (
+            <Button
+              size="sm"
+              variant={isCompleted || isExpired ? "ghost" : "default"}
+              className={
+                isCompleted || isExpired
+                  ? ""
+                  : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
+              }
+              disabled={isCompleted || isExpired}
+              onClick={() => !isCompleted && !isExpired && completeQuest(quest.id)}
+            >
+              {isCompleted ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Completed
+                </>
+              ) : isExpired ? (
+                "Expired"
+              ) : (
+                "Complete"
+              )}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant={isCompleted || isExpired ? "ghost" : "default"}
+              className={
+                isCompleted || isExpired
+                  ? ""
+                  : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
+              }
+              disabled={true}
+            >
+              {isCompleted ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Completed
+                </>
+              ) : isExpired ? (
+                "Expired"
+              ) : (
+                "Complete"
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>

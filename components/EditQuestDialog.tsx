@@ -21,41 +21,79 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-
-interface Quest {
-  title: string;
-  description: string;
-  type: "daily" | "weekly" | "onetime";
-  difficulty: "easy" | "medium" | "hard" | "epic";
-  dueTime?: string;
-  dueDay?: string;
-  dueDate?: string;
-}
+import { Quest } from "@/lib/supabase/models";
 
 interface EditQuestDialogProps {
   children: ReactNode;
   quest: Quest;
+  updateQuest: (questId: string, updates: Partial<Quest>) => Promise<Quest>;
+  deleteQuest: (questId: string) => Promise<void>;
 }
 
 export default function EditQuestDialog({
   children,
   quest,
+  updateQuest,
+  deleteQuest,
 }: EditQuestDialogProps) {
   const [questType, setQuestType] = useState(quest.type);
   const [title, setTitle] = useState(quest.title);
   const [description, setDescription] = useState(quest.description);
   const [difficulty, setDifficulty] = useState(quest.difficulty);
-  const [dueTime, setDueTime] = useState(quest.dueTime || "");
-  const [dueDay, setDueDay] = useState(quest.dueDay || "");
+  const [dueTime, setDueTime] = useState(quest.due_time || "");
+  const [dueDay, setDueDay] = useState(quest.due_day || "");
   const [date, setDate] = useState<Date | undefined>(
-    quest.dueDate ? new Date(quest.dueDate) : undefined
+    quest.due_date ? new Date(quest.due_date) : undefined
   );
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await updateQuest(quest.id, {
+        title: title.trim(),
+        description: description.trim(),
+        type: questType,
+        difficulty,
+        due_time: questType === "daily" ? dueTime : undefined,
+        due_day: questType === "weekly" ? dueDay : undefined,
+        due_date:
+          questType === "onetime" && date ? date.toISOString() : undefined,
+      });
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to update quest:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteQuest(quest.id);
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to delete quest:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="bg-[#1a1a1a]">
         <DialogHeader>
@@ -64,9 +102,11 @@ export default function EditQuestDialog({
             Modify your quest details to line up with your epic journey!
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="quest-title" className="text-sm font-medium">Quest Title</Label>
+            <Label htmlFor="quest-title" className="text-sm font-medium">
+              Quest Title
+            </Label>
             <Input
               id="quest-title"
               type="text"
@@ -76,7 +116,9 @@ export default function EditQuestDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="quest-description" className="text-sm font-medium">Description</Label>
+            <Label htmlFor="quest-description" className="text-sm font-medium">
+              Description
+            </Label>
             <Textarea
               id="quest-description"
               value={description}
@@ -88,7 +130,12 @@ export default function EditQuestDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label className="text-sm font-medium">Quest Type</Label>
-              <Select value={questType} onValueChange={(value) => setQuestType(value as "daily" | "weekly" | "onetime")}>
+              <Select
+                value={questType}
+                onValueChange={(value) =>
+                  setQuestType(value as "daily" | "weekly" | "onetime")
+                }
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -101,7 +148,12 @@ export default function EditQuestDialog({
             </div>
             <div className="grid gap-2">
               <Label className="text-sm font-medium">Difficulty</Label>
-              <Select value={difficulty} onValueChange={(value) => setDifficulty(value as "easy" | "medium" | "hard" | "epic")}>
+              <Select
+                value={difficulty}
+                onValueChange={(value) =>
+                  setDifficulty(value as "easy" | "medium" | "hard" | "epic")
+                }
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -117,7 +169,9 @@ export default function EditQuestDialog({
 
           {questType === "daily" && (
             <div className="grid gap-2">
-              <Label htmlFor="daily-time" className="text-sm font-medium">Daily Time</Label>
+              <Label htmlFor="daily-time" className="text-sm font-medium">
+                Daily Time
+              </Label>
               <Input
                 id="daily-time"
                 type="time"
@@ -154,35 +208,48 @@ export default function EditQuestDialog({
                 <PopoverTrigger asChild>
                   <Button
                     variant={"outline"}
-                    className={`w-full justify-start text-left font-normal ${!date ? "text-muted-foreground" : ""}`}
+                    className={`w-full justify-start text-left font-normal ${
+                      !date ? "text-muted-foreground" : ""
+                    }`}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                  />
+                  <Calendar mode="single" selected={date} onSelect={setDate} />
                 </PopoverContent>
               </Popover>
             </div>
           )}
 
           <div className="flex gap-2 justify-between mt-6">
-            <Button variant="destructive">
-              Delete Quest
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Quest"}
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button className="bg-[#E6C100] text-black hover:bg-[#E6C100]/90">
-                Save Changes
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#E6C100] text-black hover:bg-[#E6C100]/90"
+                disabled={isSubmitting || !title.trim() || !description.trim()}
+              >
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
