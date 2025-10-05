@@ -10,10 +10,12 @@ import { useQuests } from "@/lib/hooks/useQuests";
 
 const DashboardPage = () => {
   const [showUpcoming, setShowUpcoming] = useState(true);
+  const [showExpired, setShowExpired] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const {
-    dailyQuests,
-    weeklyQuests,
-    onetimeQuests,
+    dailyQuests: allDailyQuests,
+    weeklyQuests: allWeeklyQuests,
+    onetimeQuests: allOnetimeQuests,
     upcomingQuests,
     loading,
     createQuest,
@@ -21,6 +23,19 @@ const DashboardPage = () => {
     deleteQuest,
     completeQuest,
   } = useQuests();
+
+  const getFilteredQuests = (questList: any[]) => {
+    return questList.filter(quest => {
+      if (quest.is_expired && !showExpired) return false;
+      if (quest.is_completed && !showCompleted) return false;
+      if (!quest.is_expired && !quest.is_completed) return true;
+      return (quest.is_expired && showExpired) || (quest.is_completed && showCompleted);
+    });
+  };
+
+  const dailyQuests = getFilteredQuests(allDailyQuests);
+  const weeklyQuests = getFilteredQuests(allWeeklyQuests);
+  const onetimeQuests = getFilteredQuests(allOnetimeQuests);
 
   if (loading) {
     return (
@@ -56,6 +71,42 @@ const DashboardPage = () => {
               <>
                 <Eye className="w-4 h-4" />
                 Show Upcoming
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setShowExpired(!showExpired)}
+            className="text-gray-400 hover:text-[#E6C100]"
+          >
+            {showExpired ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                Hide Expired
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                Show Expired
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="text-gray-400 hover:text-[#E6C100]"
+          >
+            {showCompleted ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                Hide Completed
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                Show Completed
               </>
             )}
           </Button>

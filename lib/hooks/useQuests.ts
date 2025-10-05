@@ -182,12 +182,20 @@ export function useQuests() {
     .sort(sortByTimeLeft)
     .slice(0, 5);
 
+  const expiredQuests = quests
+    .filter((quest) => quest.is_expired && !quest.is_completed);
+
+  const completedQuests = quests
+    .filter((quest) => quest.is_completed);
+
   return {
     quests,
     dailyQuests,
     weeklyQuests,
     onetimeQuests,
     upcomingQuests,
+    expiredQuests,
+    completedQuests,
     loading,
     error,
     createQuest,

@@ -57,7 +57,7 @@ export default function QuestCard({
   const urgency = questService.getQuestUrgency(quest);
   return (
     <div
-      className={`relative rounded-lg border-1 border-[#E6C100] bg-[#2a2a00]/20 p-4 transition-all hover:shadow-lg group ${
+      className={`relative rounded-lg border-1 border-[#E6C100] bg-[#2a2a00]/20 p-4 hover:shadow-lg group ${
         isCompleted || isExpired ? "opacity-60" : ""
       }`}
     >
