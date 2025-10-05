@@ -70,7 +70,11 @@ export default function EditQuestDialog({
         due_time: questType === "daily" ? dueTime : undefined,
         due_day: questType === "weekly" ? dueDay : undefined,
         due_date:
-          questType === "onetime" && date ? date.toISOString() : undefined,
+          questType === "onetime" && date ? (() => {
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+            return endOfDay.toISOString();
+          })() : undefined,
       });
       setOpen(false);
     } catch (error) {

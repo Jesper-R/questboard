@@ -193,10 +193,11 @@ export const questService = {
           ].indexOf(quest.due_day);
 
           const currentDayIndex = getWeekDayIndex(now);
-          let daysLeft = questDayIndex - currentDayIndex;
-          if (daysLeft < 0) daysLeft += 7;
-
-          const timeLeft = daysLeft * 24 * 60 * 60 * 1000;
+          const daysLeft = questDayIndex - currentDayIndex;
+          const dueDay = new Date(now);
+          dueDay.setDate(now.getDate() + daysLeft);
+          dueDay.setHours(23, 59, 59, 999);
+          const timeLeft = dueDay.getTime() - now.getTime();
 
           if (daysLeft <= 1) {
             return {
@@ -284,8 +285,7 @@ export const questService = {
       case "onetime":
         if (quest.due_date) {
           const dueDate = new Date(quest.due_date);
-          dueDate.setDate(dueDate.getDate() + 1);
-          if (now >= dueDate) {
+          if (now > dueDate) {
             return true;
           }
         }

@@ -170,9 +170,16 @@ export function useQuests() {
   const onetimeQuests = quests
     .filter((quest) => quest.type === "onetime")
     .sort(sortByUrgencyAndDueTime);
+
+  const sortByTimeLeft = (a: Quest, b: Quest) => {
+    const aUrgency = questService.getQuestUrgency(a);
+    const bUrgency = questService.getQuestUrgency(b);
+    return aUrgency.timeLeft - bUrgency.timeLeft;
+  };
+
   const upcomingQuests = quests
     .filter((quest) => !quest.is_completed && !quest.is_expired)
-    .sort(sortByUrgencyAndDueTime)
+    .sort(sortByTimeLeft)
     .slice(0, 5);
 
   return {
