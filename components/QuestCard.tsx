@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Calendar, CheckCircle } from "lucide-react";
 import EditQuestDialog from "@/components/EditQuestDialog";
 import { Quest } from "@/lib/supabase/models";
+import { questService } from "@/lib/services";
 import { format } from "date-fns";
 
 interface QuestCardProps {
@@ -18,6 +19,21 @@ const difficultyColors = {
   medium: "bg-yellow-500",
   hard: "bg-red-500",
   epic: "bg-purple-500",
+};
+
+const urgencyStyles = {
+  1: {
+    label: "border-red-500 bg-red-500/10 text-red-400",
+    border: "border-red-500",
+  },
+  2: {
+    label: "border-orange-500 bg-orange-500/10 text-orange-400",
+    border: "border-orange-500",
+  },
+  3: {
+    label: "border-yellow-500 bg-yellow-500/10 text-yellow-400",
+    border: "border-yellow-500",
+  },
 };
 
 export default function QuestCard({
@@ -37,20 +53,32 @@ export default function QuestCard({
     due_day: dueDay,
     due_date: dueDate,
   } = quest;
+
+  const urgency = questService.getQuestUrgency(quest);
   return (
     <div
       className={`relative rounded-lg border-1 border-[#E6C100] bg-[#2a2a00]/20 p-4 transition-all hover:shadow-lg group ${
         isCompleted || isExpired ? "opacity-60" : ""
       }`}
     >
-      <div className="flex items-center gap-1 absolute top-3 right-3">
-        <div
-          className={`w-3 h-3 rounded-full ${difficultyColors[difficulty]}`}
-        ></div>
-      </div>
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-center gap-1 absolute top-3 right-3"></div>
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-lg text-white">{title}</h3>
+          <h3 className="font-semibold text-lg leading-tight text-white">
+            {title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-3">
+          {urgency.level && (
+            <div
+              className={`leading-tight rounded-2xl px-2 py-0.5 text-xs font-semibold ${urgencyStyles[urgency.level].label}`}
+            >
+              {urgency.label}
+            </div>
+          )}
+          <div
+            className={`w-3 h-3 rounded-full ${difficultyColors[difficulty]}`}
+          ></div>
         </div>
       </div>
 
@@ -84,13 +112,13 @@ export default function QuestCard({
               updateQuest={updateQuest}
               deleteQuest={deleteQuest}
             >
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-gray-400 hover:text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-            >
-              Edit
-            </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-gray-400 hover:text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              >
+                Edit
+              </Button>
             </EditQuestDialog>
           )}
           {completeQuest ? (
@@ -103,7 +131,9 @@ export default function QuestCard({
                   : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
               }
               disabled={isCompleted || isExpired}
-              onClick={() => !isCompleted && !isExpired && completeQuest(quest.id)}
+              onClick={() =>
+                !isCompleted && !isExpired && completeQuest(quest.id)
+              }
             >
               {isCompleted ? (
                 <>

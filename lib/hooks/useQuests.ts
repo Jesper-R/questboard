@@ -125,11 +125,54 @@ export function useQuests() {
     }
   }
 
-  const dailyQuests = quests.filter((quest) => quest.type === "daily");
-  const weeklyQuests = quests.filter((quest) => quest.type === "weekly");
-  const onetimeQuests = quests.filter((quest) => quest.type === "onetime");
+  const sortByUrgencyAndDueTime = (a: Quest, b: Quest) => {
+    const aUrgency = questService.getQuestUrgency(a);
+    const bUrgency = questService.getQuestUrgency(b);
+
+    const aLevel = aUrgency.level ?? Infinity;
+    const bLevel = bUrgency.level ?? Infinity;
+    if (aLevel !== bLevel) {
+      return aLevel - bLevel;
+    }
+
+    if (a.type === "daily" && b.type === "daily") {
+      return a.due_time!.localeCompare(b.due_time!);
+    }
+
+    if (a.type === "weekly" && b.type === "weekly") {
+      const dayOrder = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+      const aDay = dayOrder.indexOf(a.due_day!);
+      const bDay = dayOrder.indexOf(b.due_day!);
+      return aDay - bDay;
+    }
+
+    if (a.type === "onetime" && b.type === "onetime") {
+      return new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
+    }
+
+    return 0;
+  };
+
+  const dailyQuests = quests
+    .filter((quest) => quest.type === "daily")
+    .sort(sortByUrgencyAndDueTime);
+  const weeklyQuests = quests
+    .filter((quest) => quest.type === "weekly")
+    .sort(sortByUrgencyAndDueTime);
+  const onetimeQuests = quests
+    .filter((quest) => quest.type === "onetime")
+    .sort(sortByUrgencyAndDueTime);
   const upcomingQuests = quests
     .filter((quest) => !quest.is_completed && !quest.is_expired)
+    .sort(sortByUrgencyAndDueTime)
     .slice(0, 5);
 
   return {

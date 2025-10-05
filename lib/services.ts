@@ -134,17 +134,126 @@ const difficultyRewards: Record<string, { xp: number; coins: number }> = {
   epic: { xp: 100, coins: 50 },
 };
 
+export type QuestUrgency = {
+  level: 1 | 2 | 3 | null;
+  label: string;
+  timeLeft: number;
+};
+
+function getWeekDayIndex(date: Date): number {
+  return date.getDay() === 0 ? 6 : date.getDay() - 1;
+}
+
 export const questService = {
-  isQuestExpired(quest: {
-    type: string;
-    due_time?: string;
-    due_day?: string;
-    due_date?: string;
-  }): boolean {
+  getQuestUrgency(quest: Quest): QuestUrgency {
+    if (quest.is_completed || quest.is_expired) {
+      return { level: null, label: "", timeLeft: Infinity };
+    }
+
+    const now = new Date();
+
+    switch (quest.type) {
+      case "daily":
+        if (quest.due_time) {
+          const [hours, minutes] = quest.due_time.split(":").map(Number);
+          const dueDateTime = new Date();
+          dueDateTime.setHours(hours, minutes, 0, 0);
+
+          const msLeft = dueDateTime.getTime() - now.getTime();
+          const hoursLeft = msLeft / (1000 * 60 * 60);
+
+          if (hoursLeft < 1) {
+            return {
+              level: 1,
+              label: "<1h left",
+              timeLeft: msLeft,
+            };
+          } else if (hoursLeft < 6) {
+            return {
+              level: 2,
+              label: "Due Soon",
+              timeLeft: msLeft,
+            };
+          }
+
+          return { level: null, label: "", timeLeft: msLeft };
+        }
+        break;
+
+      case "weekly":
+        if (quest.due_day) {
+          const questDayIndex = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+          ].indexOf(quest.due_day);
+
+          const currentDayIndex = getWeekDayIndex(now);
+          let daysLeft = questDayIndex - currentDayIndex;
+          if (daysLeft < 0) daysLeft += 7;
+
+          const timeLeft = daysLeft * 24 * 60 * 60 * 1000;
+
+          if (daysLeft <= 1) {
+            return {
+              level: 1,
+              label: "Due Today",
+              timeLeft,
+            };
+          } else if (daysLeft <= 3) {
+            return {
+              level: 2,
+              label: "Due Soon",
+              timeLeft,
+            };
+          }
+
+          return { level: null, label: "", timeLeft };
+        }
+        break;
+
+      case "onetime":
+        if (quest.due_date) {
+          const dueDate = new Date(quest.due_date);
+          const msLeft = dueDate.getTime() - now.getTime();
+          const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+
+          if (daysLeft <= 1) {
+            return {
+              level: 1,
+              label: "Due Today",
+              timeLeft: msLeft,
+            };
+          } else if (daysLeft <= 7) {
+            return {
+              level: 2,
+              label: "Due Soon",
+              timeLeft: msLeft,
+            };
+          } else if (daysLeft <= 30) {
+            return {
+              level: 3,
+              label: "This month",
+              timeLeft: msLeft,
+            };
+          }
+
+          return { level: null, label: "", timeLeft: msLeft };
+        }
+        break;
+    }
+
+    return { level: null, label: "", timeLeft: Infinity };
+  },
+
+  isQuestExpired(quest: Partial<Quest>): boolean {
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5);
-    const currentDayIndex = now.getDay();
-    const currentDate = now.toISOString();
+    const currentDayIndex = getWeekDayIndex(now);
 
     switch (quest.type) {
       case "daily":
@@ -156,13 +265,13 @@ export const questService = {
       case "weekly":
         if (quest.due_day) {
           const questDayIndex = [
-            "sunday",
             "monday",
             "tuesday",
             "wednesday",
             "thursday",
             "friday",
             "saturday",
+            "sunday",
           ].indexOf(quest.due_day);
           console.log(currentDayIndex);
           console.log(questDayIndex);
@@ -411,7 +520,6 @@ export const questService = {
     userId: string
   ): Promise<void> {
     const now = new Date();
-    const currentDayIndex = now.getDay();
     const currentDateStr = now.toISOString().split("T")[0];
 
     const { data: quests, error: fetchError } = await supabase
@@ -445,34 +553,19 @@ export const questService = {
           const lastActionDate = new Date(
             quest.completed_at || quest.updated_at
           );
-          const lastActionDayIndex = lastActionDate.getDay();
 
-          if (quest.due_day) {
-            const questDayIndex = [
-              "sunday",
-              "monday",
-              "tuesday",
-              "wednesday",
-              "thursday",
-              "friday",
-              "saturday",
-            ].indexOf(quest.due_day);
+          const currentWeekStart = new Date(now);
+          currentWeekStart.setDate(now.getDate() - getWeekDayIndex(now));
+          currentWeekStart.setHours(0, 0, 0, 0);
 
-            if (
-              currentDayIndex <= questDayIndex &&
-              lastActionDayIndex >= questDayIndex
-            ) {
-              const daysSinceLastAction = Math.floor(
-                (now.getTime() - lastActionDate.getTime()) /
-                  (1000 * 60 * 60 * 24)
-              );
-              if (
-                daysSinceLastAction >=
-                7 - (lastActionDayIndex - questDayIndex)
-              ) {
-                shouldRefresh = true;
-              }
-            }
+          const lastActionWeekStart = new Date(lastActionDate);
+          lastActionWeekStart.setDate(
+            lastActionDate.getDate() - getWeekDayIndex(lastActionDate)
+          );
+          lastActionWeekStart.setHours(0, 0, 0, 0);
+
+          if (currentWeekStart.getTime() > lastActionWeekStart.getTime()) {
+            shouldRefresh = true;
           }
         }
       }
