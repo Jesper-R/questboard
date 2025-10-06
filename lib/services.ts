@@ -246,7 +246,7 @@ export const questService = {
           } else if (hoursLeft < 6) {
             return {
               level: 2,
-              label: "Due Soon",
+              label: "<6h left",
               timeLeft: msLeft,
             };
           }
@@ -268,13 +268,13 @@ export const questService = {
           if (daysLeft < 1) {
             return {
               level: 1,
-              label: "Due Today",
+              label: "Today",
               timeLeft,
             };
-          } else if (daysLeft < 3) {
+          } else if (daysLeft < 2) {
             return {
               level: 2,
-              label: "Due Soon",
+              label: "Tomorrow",
               timeLeft,
             };
           }
@@ -292,13 +292,13 @@ export const questService = {
           if (daysLeft < 1) {
             return {
               level: 1,
-              label: "Due Today",
+              label: "Today",
               timeLeft: msLeft,
             };
           } else if (daysLeft < 7) {
             return {
               level: 2,
-              label: "Due Soon",
+              label: "This week",
               timeLeft: msLeft,
             };
           } else if (daysLeft < 30) {
