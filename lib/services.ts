@@ -33,7 +33,7 @@ export const userService = {
         coins: user.coins || 100,
         login_streak: user.login_streak || 0,
         quest_streak: user.quest_streak || 0,
-        last_login_date: user.last_login_date || new Date().toISOString(),
+        last_login_date: user.last_login_date || DateUtils.nowString(),
         quests_completed: user.quests_completed || 0,
         daily_quests_completed: user.daily_quests_completed || 0,
         weekly_quests_completed: user.weekly_quests_completed || 0,
@@ -56,7 +56,7 @@ export const userService = {
       .from("users")
       .update({
         ...updates,
-        updated_at: new Date().toISOString(),
+        updated_at: DateUtils.nowString(),
       })
       .eq("clerk_user_id", clerkUserId)
       .select()
@@ -73,15 +73,13 @@ export const userService = {
     const user = await this.getUser(supabase, clerkUserId);
     if (!user) throw new Error("User not found");
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = DateUtils.todayLocal();
     const lastLogin = user.last_login_date?.split("T")[0];
 
     let newStreak = user.login_streak;
 
     if (lastLogin !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
+      const yesterdayStr = getLocalDateString(DateUtils.yesterday());
 
       if (lastLogin === yesterdayStr) {
         newStreak = user.login_streak + 1;
@@ -91,7 +89,7 @@ export const userService = {
 
       return this.updateUser(supabase, clerkUserId, {
         login_streak: newStreak,
-        last_login_date: new Date().toISOString(),
+        last_login_date: DateUtils.nowString(),
       });
     }
 
@@ -140,23 +138,100 @@ export type QuestUrgency = {
   timeLeft: number;
 };
 
-function getWeekDayIndex(date: Date): number {
-  return date.getDay() === 0 ? 6 : date.getDay() - 1;
+function getLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const DateUtils = {
+  now: () => new Date(),
+  nowString: () => new Date().toISOString(),
+  todayLocal: () => getLocalDateString(new Date()),
+
+  addDays: (date: Date, days: number): Date => {
+    const result = new Date(date);
+    result.setDate(date.getDate() + days);
+    return result;
+  },
+
+  yesterday: (): Date => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    return date;
+  },
+
+  WEEKDAYS: [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ],
+
+  getWeekDayIndex: (date: Date): number => {
+    return date.getDay() === 0 ? 6 : date.getDay() - 1;
+  },
+
+  daysUntilNextMonday: (currentDayIndex: number): number => {
+    return 7 - currentDayIndex;
+  },
+};
+
+function calculateScheduledFor(quest: Partial<QuestInsert>): string | null {
+  const now = DateUtils.now();
+
+  switch (quest.type) {
+    case "daily":
+      if (quest.due_time) {
+        const [hours, minutes] = quest.due_time.split(":").map(Number);
+        const todayDue = DateUtils.now();
+        todayDue.setHours(hours, minutes, 0, 0);
+
+        if (now > todayDue) {
+          const tomorrow = DateUtils.addDays(now, 1);
+          return getLocalDateString(tomorrow);
+        }
+      }
+      return null;
+
+    case "weekly":
+      if (quest.due_day) {
+        const questDayIndex = DateUtils.WEEKDAYS.indexOf(quest.due_day);
+        const currentDayIndex = DateUtils.getWeekDayIndex(now);
+
+        if (questDayIndex >= currentDayIndex) {
+          return null;
+        } else {
+          const daysUntilNextMonday =
+            DateUtils.daysUntilNextMonday(currentDayIndex);
+          const scheduledDate = DateUtils.addDays(now, daysUntilNextMonday);
+          return getLocalDateString(scheduledDate);
+        }
+      }
+      return null;
+
+    default:
+      return null;
+  }
 }
 
 export const questService = {
   getQuestUrgency(quest: Quest): QuestUrgency {
-    if (quest.is_completed || quest.is_expired) {
+    if (quest.is_completed || quest.is_expired || quest.scheduled_for) {
       return { level: null, label: "", timeLeft: Infinity };
     }
 
-    const now = new Date();
+    const now = DateUtils.now();
 
     switch (quest.type) {
       case "daily":
         if (quest.due_time) {
           const [hours, minutes] = quest.due_time.split(":").map(Number);
-          const dueDateTime = new Date();
+          const dueDateTime = DateUtils.now();
           dueDateTime.setHours(hours, minutes, 0, 0);
 
           const msLeft = dueDateTime.getTime() - now.getTime();
@@ -182,30 +257,21 @@ export const questService = {
 
       case "weekly":
         if (quest.due_day) {
-          const questDayIndex = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-          ].indexOf(quest.due_day);
-
-          const currentDayIndex = getWeekDayIndex(now);
+          const questDayIndex = DateUtils.WEEKDAYS.indexOf(quest.due_day);
+          const currentDayIndex = DateUtils.getWeekDayIndex(now);
           const daysLeft = questDayIndex - currentDayIndex;
-          const dueDay = new Date(now);
+          const dueDay = DateUtils.now();
           dueDay.setDate(now.getDate() + daysLeft);
           dueDay.setHours(23, 59, 59, 999);
           const timeLeft = dueDay.getTime() - now.getTime();
 
-          if (daysLeft <= 1) {
+          if (daysLeft < 1) {
             return {
               level: 1,
               label: "Due Today",
               timeLeft,
             };
-          } else if (daysLeft <= 3) {
+          } else if (daysLeft < 3) {
             return {
               level: 2,
               label: "Due Soon",
@@ -223,19 +289,19 @@ export const questService = {
           const msLeft = dueDate.getTime() - now.getTime();
           const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
 
-          if (daysLeft <= 1) {
+          if (daysLeft < 1) {
             return {
               level: 1,
               label: "Due Today",
               timeLeft: msLeft,
             };
-          } else if (daysLeft <= 7) {
+          } else if (daysLeft < 7) {
             return {
               level: 2,
               label: "Due Soon",
               timeLeft: msLeft,
             };
-          } else if (daysLeft <= 30) {
+          } else if (daysLeft < 30) {
             return {
               level: 3,
               label: "This month",
@@ -252,9 +318,9 @@ export const questService = {
   },
 
   isQuestExpired(quest: Partial<Quest>): boolean {
-    const now = new Date();
+    const now = DateUtils.now();
     const currentTime = now.toTimeString().slice(0, 5);
-    const currentDayIndex = getWeekDayIndex(now);
+    const currentDayIndex = DateUtils.getWeekDayIndex(now);
 
     switch (quest.type) {
       case "daily":
@@ -313,12 +379,21 @@ export const questService = {
   ): Promise<Quest> {
     const rewards = difficultyRewards[quest.difficulty];
 
-    const isExpired = this.isQuestExpired({
+    const wouldBeExpired = this.isQuestExpired({
       type: quest.type,
       due_time: quest.due_time,
       due_day: quest.due_day,
       due_date: quest.due_date,
     });
+
+    let scheduledFor = null;
+    let isExpired = false;
+
+    if (wouldBeExpired && quest.type !== "onetime") {
+      scheduledFor = calculateScheduledFor(quest);
+    } else if (wouldBeExpired && quest.type === "onetime") {
+      isExpired = true;
+    }
 
     const { data, error } = await supabase
       .from("quests")
@@ -333,6 +408,7 @@ export const questService = {
         due_time: quest.due_time || null,
         due_day: quest.due_day || null,
         due_date: quest.due_date || null,
+        scheduled_for: quest.scheduled_for || scheduledFor,
         xp_reward: quest.xp_reward || rewards.xp,
         coin_reward: quest.coin_reward || rewards.coins,
       })
@@ -444,8 +520,8 @@ export const questService = {
       .from("quests")
       .update({
         is_completed: true,
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        completed_at: DateUtils.nowString(),
+        updated_at: DateUtils.nowString(),
         xp_reward: rewards.xp,
         coin_reward: rewards.coins,
       })
@@ -497,7 +573,7 @@ export const questService = {
     const expiredQuestIds: string[] = [];
 
     for (const quest of quests) {
-      if (this.isQuestExpired(quest)) {
+      if (!quest.scheduled_for && this.isQuestExpired(quest)) {
         expiredQuestIds.push(quest.id);
       }
     }
@@ -507,7 +583,7 @@ export const questService = {
         .from("quests")
         .update({
           is_expired: true,
-          updated_at: new Date().toISOString(),
+          updated_at: DateUtils.nowString(),
         })
         .in("id", expiredQuestIds);
 
@@ -515,12 +591,44 @@ export const questService = {
     }
   },
 
+  async activateScheduledQuests(
+    supabase: SupabaseClient,
+    userId: string
+  ): Promise<void> {
+    const now = DateUtils.now();
+    const currentDateStr = getLocalDateString(now);
+
+    const { data: scheduledQuests, error: fetchError } = await supabase
+      .from("quests")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_completed", false)
+      .eq("is_expired", false)
+      .not("scheduled_for", "is", null)
+      .lte("scheduled_for", currentDateStr);
+
+    if (fetchError) throw fetchError;
+    if (!scheduledQuests || scheduledQuests.length === 0) return;
+
+    const questIds = scheduledQuests.map((quest) => quest.id);
+
+    const { error: updateError } = await supabase
+      .from("quests")
+      .update({
+        scheduled_for: null,
+        updated_at: DateUtils.nowString(),
+      })
+      .in("id", questIds);
+
+    if (updateError) throw updateError;
+  },
+
   async refreshRecurringQuests(
     supabase: SupabaseClient,
     userId: string
   ): Promise<void> {
-    const now = new Date();
-    const currentDateStr = now.toISOString().split("T")[0];
+    const now = DateUtils.now();
+    const currentDateStr = getLocalDateString(now);
 
     const { data: quests, error: fetchError } = await supabase
       .from("quests")
@@ -555,12 +663,14 @@ export const questService = {
           );
 
           const currentWeekStart = new Date(now);
-          currentWeekStart.setDate(now.getDate() - getWeekDayIndex(now));
+          currentWeekStart.setDate(
+            now.getDate() - DateUtils.getWeekDayIndex(now)
+          );
           currentWeekStart.setHours(0, 0, 0, 0);
 
           const lastActionWeekStart = new Date(lastActionDate);
           lastActionWeekStart.setDate(
-            lastActionDate.getDate() - getWeekDayIndex(lastActionDate)
+            lastActionDate.getDate() - DateUtils.getWeekDayIndex(lastActionDate)
           );
           lastActionWeekStart.setHours(0, 0, 0, 0);
 
@@ -582,7 +692,7 @@ export const questService = {
           is_completed: false,
           is_expired: false,
           completed_at: null,
-          updated_at: new Date().toISOString(),
+          updated_at: DateUtils.nowString(),
         })
         .in("id", questsToRefresh);
 

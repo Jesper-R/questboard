@@ -9,9 +9,9 @@ import { format } from "date-fns";
 
 interface QuestCardProps {
   quest: Quest;
-  updateQuest?: (questId: string, updates: Partial<Quest>) => Promise<Quest>;
-  deleteQuest?: (questId: string) => Promise<void>;
-  completeQuest?: (questId: string) => Promise<Quest>;
+  updateQuest: (questId: string, updates: Partial<Quest>) => Promise<Quest>;
+  deleteQuest: (questId: string) => Promise<void>;
+  completeQuest: (questId: string) => Promise<Quest>;
 }
 
 const difficultyColors = {
@@ -52,13 +52,14 @@ export default function QuestCard({
     due_time: dueTime,
     due_day: dueDay,
     due_date: dueDate,
+    scheduled_for: scheduledFor,
   } = quest;
 
   const urgency = questService.getQuestUrgency(quest);
   return (
     <div
       className={`relative rounded-lg border-1 border-[#E6C100] bg-[#2a2a00]/20 p-4 hover:shadow-lg group ${
-        isCompleted || isExpired ? "opacity-60" : ""
+        isCompleted || isExpired || !!scheduledFor ? "opacity-60" : ""
       }`}
     >
       <div className="flex items-center gap-1 absolute top-3 right-3"></div>
@@ -106,69 +107,45 @@ export default function QuestCard({
           )}
         </div>
         <div className="gap-1 flex">
-          {updateQuest && deleteQuest && (
-            <EditQuestDialog
-              quest={quest}
-              updateQuest={updateQuest}
-              deleteQuest={deleteQuest}
-            >
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-gray-400 hover:text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-              >
-                Edit
-              </Button>
-            </EditQuestDialog>
-          )}
-          {completeQuest ? (
+          <EditQuestDialog
+            quest={quest}
+            updateQuest={updateQuest}
+            deleteQuest={deleteQuest}
+          >
             <Button
               size="sm"
-              variant={isCompleted || isExpired ? "ghost" : "default"}
-              className={
-                isCompleted || isExpired
-                  ? ""
-                  : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
-              }
-              disabled={isCompleted || isExpired}
-              onClick={() =>
-                !isCompleted && !isExpired && completeQuest(quest.id)
-              }
+              variant="ghost"
+              className="text-gray-400 hover:text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
             >
-              {isCompleted ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Completed
-                </>
-              ) : isExpired ? (
-                "Expired"
-              ) : (
-                "Complete"
-              )}
+              Edit
             </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant={isCompleted || isExpired ? "ghost" : "default"}
-              className={
-                isCompleted || isExpired
-                  ? ""
-                  : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
-              }
-              disabled={true}
-            >
-              {isCompleted ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Completed
-                </>
-              ) : isExpired ? (
-                "Expired"
-              ) : (
-                "Complete"
-              )}
-            </Button>
-          )}
+          </EditQuestDialog>
+          <Button
+            size="sm"
+            variant={isCompleted || isExpired || !!scheduledFor ? "ghost" : "default"}
+            className={
+              isCompleted || isExpired || !!scheduledFor
+                ? ""
+                : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
+            }
+            disabled={isCompleted || isExpired || !!scheduledFor || !completeQuest}
+            onClick={() =>
+              !isCompleted && !isExpired && !scheduledFor && completeQuest(quest.id)
+            }
+          >
+            {isCompleted ? (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                Completed
+              </>
+            ) : isExpired ? (
+              "Expired"
+            ) : !!scheduledFor ? (
+              "Scheduled"
+            ) : (
+              "Complete"
+            )}
+          </Button>
         </div>
       </div>
     </div>

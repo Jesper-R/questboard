@@ -27,6 +27,7 @@ export function useQuests() {
 
     try {
       setError(null);
+      await questService.activateScheduledQuests(supabase, userData.id);
       await questService.refreshRecurringQuests(supabase, userData.id);
       await questService.checkAndExpireQuests(supabase, userData.id);
       const data = await questService.getQuests(supabase, userData.id);
@@ -126,6 +127,12 @@ export function useQuests() {
   }
 
   const sortByUrgencyAndDueTime = (a: Quest, b: Quest) => {
+    const aIsActive = !a.is_completed && !a.is_expired && !a.scheduled_for;
+    const bIsActive = !b.is_completed && !b.is_expired && !b.scheduled_for;
+
+    if (aIsActive && !bIsActive) return -1;
+    if (!aIsActive && bIsActive) return 1;
+
     const aUrgency = questService.getQuestUrgency(a);
     const bUrgency = questService.getQuestUrgency(b);
 
@@ -182,11 +189,11 @@ export function useQuests() {
     .sort(sortByTimeLeft)
     .slice(0, 5);
 
-  const expiredQuests = quests
-    .filter((quest) => quest.is_expired && !quest.is_completed);
+  const expiredQuests = quests.filter(
+    (quest) => quest.is_expired && !quest.is_completed
+  );
 
-  const completedQuests = quests
-    .filter((quest) => quest.is_completed);
+  const completedQuests = quests.filter((quest) => quest.is_completed);
 
   return {
     quests,

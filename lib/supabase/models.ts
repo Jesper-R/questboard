@@ -49,6 +49,7 @@ export interface Quest {
   due_time?: string;
   due_day?: string;
   due_date?: string;
+  scheduled_for?: string;
   xp_reward: number;
   coin_reward: number;
   completed_at?: string;
@@ -67,6 +68,7 @@ export interface QuestInsert {
   due_time?: string;
   due_day?: string;
   due_date?: string;
+  scheduled_for?: string;
   xp_reward?: number;
   coin_reward?: number;
 }

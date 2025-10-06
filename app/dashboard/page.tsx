@@ -7,11 +7,13 @@ import QuestCard from "@/components/QuestCard";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, EyeOff } from "lucide-react";
 import { useQuests } from "@/lib/hooks/useQuests";
+import { Quest } from "@/lib/supabase/models";
 
 const DashboardPage = () => {
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showExpired, setShowExpired] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showScheduled, setShowScheduled] = useState(false);
   const {
     dailyQuests: allDailyQuests,
     weeklyQuests: allWeeklyQuests,
@@ -24,12 +26,13 @@ const DashboardPage = () => {
     completeQuest,
   } = useQuests();
 
-  const getFilteredQuests = (questList: any[]) => {
+  const getFilteredQuests = (questList: Quest[]) => {
     return questList.filter(quest => {
+      if (quest.scheduled_for && !showScheduled) return false;
       if (quest.is_expired && !showExpired) return false;
       if (quest.is_completed && !showCompleted) return false;
-      if (!quest.is_expired && !quest.is_completed) return true;
-      return (quest.is_expired && showExpired) || (quest.is_completed && showCompleted);
+      if (!quest.is_expired && !quest.is_completed && !quest.scheduled_for) return true;
+      return (quest.is_expired && showExpired) || (quest.is_completed && showCompleted) || (quest.scheduled_for && showScheduled);
     });
   };
 
@@ -107,6 +110,24 @@ const DashboardPage = () => {
               <>
                 <Eye className="w-4 h-4" />
                 Show Completed
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setShowScheduled(!showScheduled)}
+            className="text-gray-400 hover:text-[#E6C100]"
+          >
+            {showScheduled ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                Hide Scheduled
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                Show Scheduled
               </>
             )}
           </Button>
