@@ -221,7 +221,16 @@ export default function EditQuestDialog({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-auto p-0">
-                  <Calendar mode="single" selected={date} onSelect={setDate} />
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
