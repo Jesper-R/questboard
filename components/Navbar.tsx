@@ -30,8 +30,37 @@ export default function Navbar() {
             </span>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className={user ? "opacity-100" : "opacity-0"}>
+          <div
+            className={`flex items-center space-x-4 ${
+              user ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div className={"flex flex-col sm:flex-row gap-1"}>
+              <div className="flex items-center rounded-md px-2">
+                <Image
+                  src="/icons/xp.png"
+                  alt="xp display"
+                  width={24}
+                  height={24}
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span className="text-sm font-medium">{userData?.xp || 0}</span>
+              </div>
+              <div className="flex items-center space-x-1 rounded-md px-2">
+                <Image
+                  src="/icons/coin.png"
+                  alt="coin display"
+                  width={24}
+                  height={24}
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span className="text-sm font-medium">
+                  {userData?.coins || 0}
+                </span>
+              </div>
+            </div>
+
+            <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div
@@ -72,9 +101,8 @@ export default function Navbar() {
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-50" align="end">
-                  <DropdownMenuItem>X</DropdownMenuItem>
-                  <DropdownMenuItem>X</DropdownMenuItem>
-                  <DropdownMenuItem>X</DropdownMenuItem>
+                  <DropdownMenuItem>Coin Shop</DropdownMenuItem>
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>
                     Log out
