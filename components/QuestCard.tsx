@@ -11,7 +11,7 @@ interface QuestCardProps {
   quest: Quest;
   updateQuest: (questId: string, updates: Partial<Quest>) => Promise<Quest>;
   deleteQuest: (questId: string) => Promise<void>;
-  completeQuest: (questId: string) => Promise<Quest>;
+  completeQuest?: (questId: string) => Promise<Quest | undefined>;
 }
 
 const difficultyColors = {
@@ -72,7 +72,9 @@ export default function QuestCard({
         <div className="flex items-center gap-3">
           {urgency.level && (
             <div
-              className={`leading-tight rounded-2xl px-2 py-0.5 text-xs font-semibold ${urgencyStyles[urgency.level].label}`}
+              className={`leading-tight rounded-2xl px-2 py-0.5 text-xs font-semibold ${
+                urgencyStyles[urgency.level].label
+              }`}
             >
               {urgency.label}
             </div>
@@ -122,15 +124,22 @@ export default function QuestCard({
           </EditQuestDialog>
           <Button
             size="sm"
-            variant={isCompleted || isExpired || !!scheduledFor ? "ghost" : "default"}
+            variant={
+              isCompleted || isExpired || !!scheduledFor ? "ghost" : "default"
+            }
             className={
               isCompleted || isExpired || !!scheduledFor
                 ? ""
                 : "bg-[#E6C100] text-black hover:bg-[#E6C100]/90 "
             }
-            disabled={isCompleted || isExpired || !!scheduledFor || !completeQuest}
+            disabled={
+              isCompleted || isExpired || !!scheduledFor || !completeQuest
+            }
             onClick={() =>
-              !isCompleted && !isExpired && !scheduledFor && completeQuest(quest.id)
+              !isCompleted &&
+              !isExpired &&
+              !scheduledFor &&
+              completeQuest?.(quest.id)
             }
           >
             {isCompleted ? (
