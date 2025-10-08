@@ -21,10 +21,6 @@ export function useQuests() {
       return;
     }
 
-    if (hasLoadedRef.current) {
-      return;
-    }
-
     try {
       setError(null);
       await questService.activateScheduledQuests(supabase, userData.id);
@@ -32,7 +28,6 @@ export function useQuests() {
       await questService.checkAndExpireQuests(supabase, userData.id);
       const data = await questService.getQuests(supabase, userData.id);
       setQuests(data);
-      hasLoadedRef.current = true;
       setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load quests.");
@@ -42,7 +37,9 @@ export function useQuests() {
 
   useEffect(() => {
     if (!hasLoadedRef.current && userData && supabase) {
-      loadQuests();
+      loadQuests().then(() => {
+        hasLoadedRef.current = true;
+      });
     }
   }, [loadQuests, userData, supabase]);
 
@@ -107,10 +104,15 @@ export function useQuests() {
 
       return completedQuest;
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to complete quest."
-      );
-      throw err;
+      if (err instanceof Error && err.message.includes("expired")) {
+        console.log("Quest expired");
+        loadQuests();
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Failed to complete quest."
+        );
+        throw err;
+      }
     }
   }
 

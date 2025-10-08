@@ -40,8 +40,8 @@ export default function Navbar() {
                 <Image
                   src="/icons/xp.png"
                   alt="xp display"
-                  width={24}
-                  height={24}
+                  width={28}
+                  height={28}
                   style={{ imageRendering: "pixelated" }}
                 />
                 <span className="text-sm font-medium">{userData?.xp || 0}</span>
