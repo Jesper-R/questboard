@@ -69,11 +69,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [clerkUser, supabase, initializeUser]);
 
+  const calculateLevel = (xp: number): number => {
+    return Math.floor(xp / 50) + 1;
+  };
+
   const updateUserData = useCallback(
     async (updates: Partial<User>) => {
       if (!clerkUser) throw new Error("User not authenticated");
 
       try {
+        if (updates.xp !== undefined) {
+          updates.level = calculateLevel(updates.xp);
+        }
+
         const updatedUser = await userService.updateUser(
           supabase!,
           clerkUser.id,
