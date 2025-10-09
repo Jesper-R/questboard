@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import SupabaseProvider from "@/lib/supabase/SupabaseProvider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { UserProvider } from "@/lib/contexts/UserContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,14 +45,15 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} ${jacquard.variable} antialiased`}
         >
           <SupabaseProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
+            <UserProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+            </UserProvider>
           </SupabaseProvider>
         </body>
       </html>

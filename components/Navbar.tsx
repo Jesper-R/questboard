@@ -2,7 +2,7 @@
 
 import { useUser, useClerk } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import { useUserData } from "@/lib/hooks/useUserData";
+import { useUserData } from "@/lib/contexts/UserContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
+import CountUp from "@/components/reactbits/CountUp";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -44,7 +45,11 @@ export default function Navbar() {
                   height={28}
                   style={{ imageRendering: "pixelated" }}
                 />
-                <span className="text-sm font-medium">{userData?.xp || 0}</span>
+                <CountUp
+                  to={userData?.xp || 0}
+                  duration={1}
+                  className="text-sm font-medium tabular-nums"
+                />
               </div>
               <div className="flex items-center space-x-1 rounded-md px-2">
                 <Image
@@ -54,9 +59,11 @@ export default function Navbar() {
                   height={24}
                   style={{ imageRendering: "pixelated" }}
                 />
-                <span className="text-sm font-medium">
-                  {userData?.coins || 0}
-                </span>
+                <CountUp
+                  to={userData?.coins || 0}
+                  duration={1}
+                  className="text-sm font-medium tabular-nums"
+                />
               </div>
             </div>
 

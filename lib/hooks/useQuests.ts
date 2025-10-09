@@ -1,16 +1,16 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { questService, userService } from "../services";
+import { questService } from "../services";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Quest, QuestInsert } from "../supabase/models";
 import { useSupabase } from "../supabase/SupabaseProvider";
-import { useUserData } from "./useUserData";
+import { useUserData } from "../contexts/UserContext";
 
 export function useQuests() {
   const { user: clerkUser } = useUser();
   const { supabase } = useSupabase();
-  const { user: userData } = useUserData();
+  const { user: userData, updateUserData } = useUserData();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,15 +87,14 @@ export function useQuests() {
         questId
       );
 
-      const freshUserData = await userService.getUser(supabase, clerkUser.id);
-      if (!freshUserData) throw new Error("User data not found");
+      if (!userData) throw new Error("User data not found");
 
-      await userService.updateUser(supabase, clerkUser.id, {
-        xp: freshUserData.xp + completedQuest.xp_reward,
-        coins: freshUserData.coins + completedQuest.coin_reward,
-        quests_completed: freshUserData.quests_completed + 1,
+      await updateUserData({
+        xp: userData.xp + completedQuest.xp_reward,
+        coins: userData.coins + completedQuest.coin_reward,
+        quests_completed: userData.quests_completed + 1,
         [`${completedQuest.type}_quests_completed`]:
-          freshUserData[`${completedQuest.type}_quests_completed`] + 1,
+          userData[`${completedQuest.type}_quests_completed`] + 1,
       });
 
       setQuests((prev) =>

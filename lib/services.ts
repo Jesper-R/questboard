@@ -288,23 +288,23 @@ export const questService = {
           const dueDate = new Date(quest.due_date);
           const msLeft = dueDate.getTime() - now.getTime();
           const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-
-          if (daysLeft < 1) {
+          console.log("daysleft: " + daysLeft);
+          if (daysLeft <= 1) {
             return {
               level: 1,
               label: "Today",
               timeLeft: msLeft,
             };
-          } else if (daysLeft < 7) {
+          } else if (daysLeft <= 8) {
             return {
               level: 2,
-              label: "This week",
+              label: "<7 days",
               timeLeft: msLeft,
             };
-          } else if (daysLeft < 30) {
+          } else if (daysLeft < 31) {
             return {
               level: 3,
-              label: "This month",
+              label: "<30 days",
               timeLeft: msLeft,
             };
           }
