@@ -1,4 +1,10 @@
-import { User, UserInsert, Quest, QuestInsert } from "./supabase/models";
+import {
+  User,
+  UserInsert,
+  Quest,
+  QuestInsert,
+  QuestLog,
+} from "./supabase/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 export const userService = {
@@ -138,17 +144,18 @@ export type QuestUrgency = {
   timeLeft: number;
 };
 
-function getLocalDateString(date: Date): string {
+export function getLocalDateString(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-const DateUtils = {
+export const DateUtils = {
   now: () => new Date(),
   nowString: () => new Date().toISOString(),
   todayLocal: () => getLocalDateString(new Date()),
+  getLocalDateString,
 
   addDays: (date: Date, days: number): Date => {
     const result = new Date(date);
@@ -516,12 +523,14 @@ export const questService = {
 
     const rewards = difficultyRewards[quest.difficulty];
 
+    const completedAt = DateUtils.nowString();
+
     const { data, error } = await supabase
       .from("quests")
       .update({
         is_completed: true,
-        completed_at: DateUtils.nowString(),
-        updated_at: DateUtils.nowString(),
+        completed_at: completedAt,
+        updated_at: completedAt,
         xp_reward: rewards.xp,
         coin_reward: rewards.coins,
       })
@@ -530,7 +539,46 @@ export const questService = {
       .single();
 
     if (error) throw error;
+
+    const { error: logError } = await supabase.from("quest_logs").insert({
+      user_id: quest.user_id,
+      quest_id: questId,
+      quest_type: quest.type,
+      xp_earned: rewards.xp,
+      coins_earned: rewards.coins,
+      completed_at: completedAt,
+    });
+
+    if (logError) {
+      console.error("Failed to create quest log:", logError);
+    }
+
     return data;
+  },
+
+  async getQuestLogs(
+    supabase: SupabaseClient,
+    userId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<QuestLog[]> {
+    let query = supabase
+      .from("quest_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .order("completed_at", { ascending: true });
+
+    if (startDate) {
+      query = query.gte("completed_at", startDate);
+    }
+    if (endDate) {
+      query = query.lte("completed_at", endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return data || [];
   },
 
   async deleteQuest(supabase: SupabaseClient, questId: string): Promise<void> {

@@ -14,6 +14,7 @@ import {
 import Image from "next/image";
 import CountUp from "@/components/reactbits/CountUp";
 import CoinShopDialog from "@/components/CoinShopDialog";
+import { Button } from "./ui/button";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -42,36 +43,46 @@ export default function Navbar() {
                 user ? "opacity-100" : "opacity-0"
               }`}
             >
-              <div className={"flex flex-col sm:flex-row gap-1"}>
-                <div className="flex items-center rounded-md px-2">
-                  <Image
-                    src="/icons/xp.png"
-                    alt="xp display"
-                    width={28}
-                    height={28}
-                    style={{ imageRendering: "pixelated" }}
-                  />
-                  <CountUp
-                    to={userData?.xp || 0}
-                    duration={1}
-                    className="text-sm font-medium tabular-nums"
-                  />
+              {isDashboard ? (
+                <div className={"flex flex-col sm:flex-row gap-1"}>
+                  <div className="flex items-center px-2">
+                    <Image
+                      src="/icons/xp.png"
+                      alt="xp display"
+                      width={28}
+                      height={28}
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    <CountUp
+                      to={userData?.xp || 0}
+                      duration={1}
+                      className="text-sm font-medium tabular-nums"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-1 px-2">
+                    <Image
+                      src="/icons/coin.png"
+                      alt="coin display"
+                      width={24}
+                      height={24}
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    <CountUp
+                      to={userData?.coins || 0}
+                      duration={1}
+                      className="text-sm font-medium tabular-nums"
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1 rounded-md px-2">
-                  <Image
-                    src="/icons/coin.png"
-                    alt="coin display"
-                    width={24}
-                    height={24}
-                    style={{ imageRendering: "pixelated" }}
-                  />
-                  <CountUp
-                    to={userData?.coins || 0}
-                    duration={1}
-                    className="text-sm font-medium tabular-nums"
-                  />
-                </div>
-              </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/dashboard")}
+                  className="hover:text-[#E6C100]"
+                >
+                  Dashboard
+                </Button>
+              )}
 
               <div>
                 <DropdownMenu>
@@ -86,7 +97,7 @@ export default function Navbar() {
                           alt="User Avatar"
                           width={32}
                           height={32}
-                          className="absolute top-1 left-1"
+                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                           style={{ imageRendering: "pixelated" }}
                         />
                         <Image

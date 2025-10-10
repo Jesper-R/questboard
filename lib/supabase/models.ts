@@ -72,3 +72,14 @@ export interface QuestInsert {
   xp_reward?: number;
   coin_reward?: number;
 }
+
+export interface QuestLog {
+  id: string;
+  user_id: string;
+  quest_id: string;
+  quest_type: "daily" | "weekly" | "onetime";
+  xp_earned: number;
+  coins_earned: number;
+  completed_at: string;
+  created_at: string;
+}
