@@ -15,11 +15,24 @@ import { useSupabase } from "@/lib/supabase/SupabaseProvider";
 import { questService, DateUtils } from "@/lib/services";
 import { useEffect, useState } from "react";
 import { QuestLog } from "@/lib/supabase/models";
+import { Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function ProfilePage() {
-  const { user: userData } = useUserData();
+  const { user: userData, updateUserData } = useUserData();
   const { supabase } = useSupabase();
   const [questLogs, setQuestLogs] = useState<QuestLog[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editedUsername, setEditedUsername] = useState("");
 
   const currentLevel = userData?.level || 1;
   const currentXP = userData?.xp || 0;
@@ -27,6 +40,18 @@ export default function ProfilePage() {
   const xpProgress = currentXP - xpForCurrentLevel;
   const xpNeeded = 50;
   const progressPercentage = (xpProgress / xpNeeded) * 100;
+
+  const handleSaveUsername = async () => {
+    if (!editedUsername.trim()) return;
+
+    try {
+      await updateUserData({ username: editedUsername.trim() });
+      setIsDialogOpen(false);
+      setEditedUsername("");
+    } catch (error) {
+      console.error("Failed to update username:", error);
+    }
+  };
 
   useEffect(() => {
     if (!userData || !supabase) return;
@@ -125,9 +150,56 @@ export default function ProfilePage() {
             <div className="flex h-[140px] py-1 flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex justify-start items-baseline gap-3">
-                  <h1 className="text-4xl font-bold font-jacquard">
-                    {userData?.username || "User"}
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <button
+                          onClick={() =>
+                            setEditedUsername(userData?.username || "")
+                          }
+                          className="text-gray-400 hover:text-[#E6C100] transition-colors"
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Edit Username</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-5 ">
+                          <Input
+                            value={editedUsername}
+                            onChange={(e) => setEditedUsername(e.target.value)}
+                            placeholder="Enter new username"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveUsername();
+                            }}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setIsDialogOpen(false);
+                                setEditedUsername("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant={"outline"}
+                              onClick={handleSaveUsername}
+                              className="bg-[#E6C100]! text-black!"
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <h1 className="text-4xl font-bold font-jacquard">
+                      {userData?.username || "User"}
+                    </h1>
+                  </div>
                   <span className="text-gray-400"> - </span>
                   <p className="text-[#E6C100] text-2xl font-jacquard">
                     {userData?.user_title}
