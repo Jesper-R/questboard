@@ -4,6 +4,7 @@ export interface User {
   username: string | null;
   email: string | null;
   avatar_path: string | null;
+  border_path: string | null;
   user_title: string;
   level: number;
   xp: number;
@@ -82,4 +83,22 @@ export interface QuestLog {
   coins_earned: number;
   completed_at: string;
   created_at: string;
+}
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  type: "title" | "border" | "avatar";
+  cost: number;
+  description?: string;
+  data: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  created_at: string;
+}
+
+export interface UserInventory {
+  id: string;
+  user_id: string;
+  item_id: string;
+  is_equipped: boolean;
 }

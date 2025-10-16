@@ -40,7 +40,7 @@ export default function Navbar() {
 
             <div
               className={`flex items-center space-x-4 ${
-                user ? "opacity-100" : "opacity-0"
+                user && userData ? "opacity-100" : "opacity-0"
               }`}
             >
               {isDashboard ? (
@@ -91,24 +91,31 @@ export default function Navbar() {
                       className={`flex items-center space-x-3 rounded-md p-3 border-none cursor-pointer hover:bg-[#222]
                     }`}
                     >
-                      <div className="relative w-10 h-10">
-                        <Image
-                          src={userData?.avatar_path || "/avatars/default.png"}
-                          alt="User Avatar"
-                          width={32}
-                          height={32}
-                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                          style={{ imageRendering: "pixelated" }}
-                        />
-                        <Image
-                          src="/borders/wood.png"
-                          alt="Avatar Border"
-                          width={40}
-                          height={40}
-                          className="absolute inset-0 pointer-events-none"
-                          style={{ imageRendering: "pixelated" }}
-                        />
-                      </div>
+                      {user && userData ? (
+                        <div className="relative w-10 h-10">
+                          <Image
+                            src={
+                              userData?.avatar_path || "/avatars/default.png"
+                            }
+                            alt="User Avatar"
+                            width={32}
+                            height={32}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                          <Image
+                            src={userData?.border_path || "/borders/wood.png"}
+                            alt="Avatar Border"
+                            width={40}
+                            height={40}
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative w-10 h-10"></div>
+                      )}
+
                       <div className="flex flex-col">
                         <span className="text-white font-medium text-sm">
                           {userData?.username || user?.firstName || "User"}

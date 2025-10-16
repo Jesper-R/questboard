@@ -7,7 +7,6 @@ import CountUp from "@/components/reactbits/CountUp";
 import { Progress } from "@/components/ui/progress";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -48,6 +47,14 @@ export default function ProfilePage() {
 
     fetchQuestLogs();
   }, [userData, supabase]);
+
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-[#151515]">
+        <Navbar />
+      </div>
+    );
+  }
 
   const chartData = (() => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -107,7 +114,7 @@ export default function ProfilePage() {
                 style={{ imageRendering: "pixelated" }}
               />
               <Image
-                src="/borders/wood.png"
+                src={userData?.border_path || "/borders/wood.png"}
                 alt="Avatar Border"
                 width={140}
                 height={140}
