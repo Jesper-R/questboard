@@ -10,7 +10,7 @@ import { useUserData } from "../contexts/UserContext";
 export function useQuests() {
   const { user: clerkUser } = useUser();
   const { supabase } = useSupabase();
-  const { user: userData, updateUserData } = useUserData();
+  const { user: userData, updateUserData, initializeUser } = useUserData();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +26,7 @@ export function useQuests() {
       await questService.activateScheduledQuests(supabase, userData.id);
       await questService.refreshRecurringQuests(supabase, userData.id);
       await questService.checkAndExpireQuests(supabase, userData.id);
+      await initializeUser();
       const data = await questService.getQuests(supabase, userData.id);
       setQuests(data);
       setLoading(false);
@@ -33,7 +34,7 @@ export function useQuests() {
       setError(err instanceof Error ? err.message : "Failed to load quests.");
       setLoading(false);
     }
-  }, [userData, supabase]);
+  }, [userData, supabase, initializeUser]);
 
   useEffect(() => {
     if (!hasLoadedRef.current && userData && supabase) {
@@ -89,12 +90,18 @@ export function useQuests() {
 
       if (!userData) throw new Error("User data not found");
 
+      const streakField = `${completedQuest.type}_streak` as
+        | "daily_streak"
+        | "weekly_streak"
+        | "onetime_streak";
+
       await updateUserData({
         xp: userData.xp + completedQuest.xp_reward,
         coins: userData.coins + completedQuest.coin_reward,
         quests_completed: userData.quests_completed + 1,
         [`${completedQuest.type}_quests_completed`]:
           userData[`${completedQuest.type}_quests_completed`] + 1,
+        [streakField]: userData[streakField] + 1,
       });
 
       setQuests((prev) =>

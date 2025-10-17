@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Eye, EyeOff } from "lucide-react";
 import { useQuests } from "@/lib/hooks/useQuests";
 import { Quest } from "@/lib/supabase/models";
+import StreakDisplay from "@/components/StreakDisplay";
 
 const DashboardPage = () => {
   const [showUpcoming, setShowUpcoming] = useState(true);
@@ -27,12 +28,17 @@ const DashboardPage = () => {
   } = useQuests();
 
   const getFilteredQuests = (questList: Quest[]) => {
-    return questList.filter(quest => {
+    return questList.filter((quest) => {
       if (quest.scheduled_for && !showScheduled) return false;
       if (quest.is_expired && !showExpired) return false;
       if (quest.is_completed && !showCompleted) return false;
-      if (!quest.is_expired && !quest.is_completed && !quest.scheduled_for) return true;
-      return (quest.is_expired && showExpired) || (quest.is_completed && showCompleted) || (quest.scheduled_for && showScheduled);
+      if (!quest.is_expired && !quest.is_completed && !quest.scheduled_for)
+        return true;
+      return (
+        (quest.is_expired && showExpired) ||
+        (quest.is_completed && showCompleted) ||
+        (quest.scheduled_for && showScheduled)
+      );
     });
   };
 
@@ -163,8 +169,9 @@ const DashboardPage = () => {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div>
-            <h2 className="text-3xl text-[#E6C100] mb-4 flex items-center gap-2 font-jacquard">
-              Daily Quests
+            <h2 className="text-3xl text-[#E6C100] mb-4 flex items-center justify-between">
+              <span className="font-jacquard">Daily Quests</span>
+              <StreakDisplay type="daily" />
             </h2>
             <div className="space-y-4">
               {dailyQuests.length > 0
@@ -182,8 +189,9 @@ const DashboardPage = () => {
           </div>
 
           <div>
-            <h2 className="text-3xl text-[#E6C100] mb-4 flex items-center gap-2 font-jacquard">
-              Weekly Quests
+            <h2 className="text-3xl text-[#E6C100] mb-4 flex items-center justify-between">
+              <span className="font-jacquard">Weekly Quests</span>
+              <StreakDisplay type="weekly" />
             </h2>
             <div className="space-y-4">
               {weeklyQuests.length > 0
@@ -201,8 +209,9 @@ const DashboardPage = () => {
           </div>
 
           <div>
-            <h2 className="text-3xl text-[#E6C100] mb-4 flex items-center gap-2 font-jacquard">
-              One-time Quests
+            <h2 className="text-3xl text-[#E6C100] mb-4 flex items-center justify-between">
+              <span className="font-jacquard">One-time Quests</span>
+              <StreakDisplay type="onetime" />
             </h2>
             <div className="space-y-4">
               {onetimeQuests.length > 0

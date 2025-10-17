@@ -10,7 +10,9 @@ export interface User {
   xp: number;
   coins: number;
   login_streak: number;
-  quest_streak: number;
+  daily_streak: number;
+  weekly_streak: number;
+  onetime_streak: number;
   last_login_date: string | null;
   quests_completed: number;
   daily_quests_completed: number;
@@ -30,7 +32,9 @@ export interface UserInsert {
   xp?: number;
   coins?: number;
   login_streak?: number;
-  quest_streak?: number;
+  daily_streak?: number;
+  weekly_streak?: number;
+  onetime_streak?: number;
   last_login_date?: string;
   quests_completed?: number;
   daily_quests_completed?: number;

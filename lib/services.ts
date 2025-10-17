@@ -38,7 +38,9 @@ export const userService = {
         xp: user.xp || 0,
         coins: user.coins || 100,
         login_streak: user.login_streak || 0,
-        quest_streak: user.quest_streak || 0,
+        daily_streak: user.daily_streak || 0,
+        weekly_streak: user.weekly_streak || 0,
+        onetime_streak: user.onetime_streak || 0,
         last_login_date: user.last_login_date || DateUtils.nowString(),
         quests_completed: user.quests_completed || 0,
         daily_quests_completed: user.daily_quests_completed || 0,
@@ -553,6 +555,39 @@ export const questService = {
       console.error("Failed to create quest log:", logError);
     }
 
+    const { data: user, error: userFetchError } = await supabase
+      .from("users")
+      .select("daily_streak, weekly_streak, onetime_streak")
+      .eq("id", quest.user_id)
+      .single();
+
+    if (userFetchError) {
+      console.error("Failed to fetch user for streak update:", userFetchError);
+    } else {
+      const streakUpdates: Partial<User> = {};
+
+      switch (quest.type) {
+        case "daily":
+          streakUpdates.daily_streak = (user.daily_streak || 0) + 1;
+          break;
+        case "weekly":
+          streakUpdates.weekly_streak = (user.weekly_streak || 0) + 1;
+          break;
+        case "onetime":
+          streakUpdates.onetime_streak = (user.onetime_streak || 0) + 1;
+          break;
+      }
+
+      const { error: streakError } = await supabase
+        .from("users")
+        .update(streakUpdates)
+        .eq("id", quest.user_id);
+
+      if (streakError) {
+        console.error("Failed to update streak:", streakError);
+      }
+    }
+
     return data;
   },
 
@@ -619,10 +654,12 @@ export const questService = {
     if (!quests) return;
 
     const expiredQuestIds: string[] = [];
+    const expiredQuestTypes: ("daily" | "weekly" | "onetime")[] = [];
 
     for (const quest of quests) {
       if (!quest.scheduled_for && this.isQuestExpired(quest)) {
         expiredQuestIds.push(quest.id);
+        expiredQuestTypes.push(quest.type);
       }
     }
 
@@ -636,6 +673,27 @@ export const questService = {
         .in("id", expiredQuestIds);
 
       if (updateError) throw updateError;
+
+      const streakUpdates: Partial<User> = {};
+
+      if (expiredQuestTypes.includes("daily")) {
+        streakUpdates.daily_streak = 0;
+      }
+      if (expiredQuestTypes.includes("weekly")) {
+        streakUpdates.weekly_streak = 0;
+      }
+      if (expiredQuestTypes.includes("onetime")) {
+        streakUpdates.onetime_streak = 0;
+      }
+
+      const { error: streakError } = await supabase
+        .from("users")
+        .update(streakUpdates)
+        .eq("id", userId);
+
+      if (streakError) {
+        console.error("Failed to reset streaks:", streakError);
+      }
     }
   },
 
