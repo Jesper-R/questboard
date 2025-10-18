@@ -53,6 +53,7 @@ export function useQuests() {
         user_id: userData.id,
       });
       setQuests((prev) => [newQuest, ...prev]);
+      window.dispatchEvent(new CustomEvent("questLogUpdated"));
       return newQuest;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create quest.");
@@ -72,6 +73,7 @@ export function useQuests() {
       setQuests((prev) =>
         prev.map((quest) => (quest.id === questId ? updatedQuest : quest))
       );
+      window.dispatchEvent(new CustomEvent("questLogUpdated"));
       return updatedQuest;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update quest.");
@@ -108,6 +110,7 @@ export function useQuests() {
         prev.map((quest) => (quest.id === questId ? completedQuest : quest))
       );
 
+      window.dispatchEvent(new CustomEvent("questLogUpdated"));
       return completedQuest;
     } catch (err) {
       if (err instanceof Error && err.message.includes("expired")) {
@@ -128,6 +131,7 @@ export function useQuests() {
     try {
       await questService.deleteQuest(supabase, questId);
       setQuests((prev) => prev.filter((quest) => quest.id !== questId));
+      window.dispatchEvent(new CustomEvent("questLogUpdated"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete quest.");
       throw err;

@@ -426,6 +426,15 @@ export const questService = {
 
     if (error) throw error;
 
+    await this.createQuestLog(
+      supabase,
+      quest.user_id,
+      data.id,
+      quest.title,
+      quest.type,
+      "created"
+    );
+
     return data;
   },
 
@@ -489,6 +498,16 @@ export const questService = {
       .single();
 
     if (error) throw error;
+
+    await this.createQuestLog(
+      supabase,
+      data.user_id,
+      questId,
+      data.title,
+      data.type,
+      "edited"
+    );
+
     return data;
   },
 
@@ -542,18 +561,16 @@ export const questService = {
 
     if (error) throw error;
 
-    const { error: logError } = await supabase.from("quest_logs").insert({
-      user_id: quest.user_id,
-      quest_id: questId,
-      quest_type: quest.type,
-      xp_earned: rewards.xp,
-      coins_earned: rewards.coins,
-      completed_at: completedAt,
-    });
-
-    if (logError) {
-      console.error("Failed to create quest log:", logError);
-    }
+    await this.createQuestLog(
+      supabase,
+      quest.user_id,
+      questId,
+      quest.title,
+      quest.type,
+      "completed",
+      rewards.xp,
+      rewards.coins
+    );
 
     const { data: user, error: userFetchError } = await supabase
       .from("users")
@@ -595,19 +612,23 @@ export const questService = {
     supabase: SupabaseClient,
     userId: string,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    action?: "created" | "completed" | "deleted" | "expired" | "edited"
   ): Promise<QuestLog[]> {
     let query = supabase
       .from("quest_logs")
       .select("*")
       .eq("user_id", userId)
-      .order("completed_at", { ascending: true });
+      .order("action_at", { ascending: true });
 
     if (startDate) {
-      query = query.gte("completed_at", startDate);
+      query = query.gte("action_at", startDate);
     }
     if (endDate) {
-      query = query.lte("completed_at", endDate);
+      query = query.lte("action_at", endDate);
+    }
+    if (action) {
+      query = query.eq("action", action);
     }
 
     const { data, error } = await query;
@@ -616,10 +637,53 @@ export const questService = {
     return data || [];
   },
 
+  async createQuestLog(
+    supabase: SupabaseClient,
+    userId: string,
+    questId: string,
+    questTitle: string,
+    questType: "daily" | "weekly" | "onetime",
+    action: "created" | "completed" | "deleted" | "expired" | "edited",
+    xpEarned?: number,
+    coinsEarned?: number
+  ): Promise<void> {
+    const { error } = await supabase.from("quest_logs").insert({
+      user_id: userId,
+      quest_id: questId,
+      quest_title: questTitle,
+      quest_type: questType,
+      action: action,
+      action_at: DateUtils.nowString(),
+      xp_earned: xpEarned || null,
+      coins_earned: coinsEarned || null,
+    });
+
+    if (error) {
+      console.error("Failed to create quest log:", error);
+    }
+  },
+
   async deleteQuest(supabase: SupabaseClient, questId: string): Promise<void> {
+    const { data: quest, error: fetchError } = await supabase
+      .from("quests")
+      .select("user_id, title, type")
+      .eq("id", questId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const { error } = await supabase.from("quests").delete().eq("id", questId);
 
     if (error) throw error;
+
+    await this.createQuestLog(
+      supabase,
+      quest.user_id,
+      questId,
+      quest.title,
+      quest.type,
+      "deleted"
+    );
   },
 
   async getQuestsByType(
@@ -673,6 +737,19 @@ export const questService = {
         .in("id", expiredQuestIds);
 
       if (updateError) throw updateError;
+
+      for (const quest of quests) {
+        if (expiredQuestIds.includes(quest.id)) {
+          await this.createQuestLog(
+            supabase,
+            userId,
+            quest.id,
+            quest.title,
+            quest.type,
+            "expired"
+          );
+        }
+      }
 
       const streakUpdates: Partial<User> = {};
 

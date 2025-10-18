@@ -9,6 +9,8 @@ import { Plus, Eye, EyeOff } from "lucide-react";
 import { useQuests } from "@/lib/hooks/useQuests";
 import { Quest } from "@/lib/supabase/models";
 import StreakDisplay from "@/components/StreakDisplay";
+import QuestActivityChart from "@/components/QuestActivityChart";
+import QuestActivityLog from "@/components/QuestActivityLog";
 
 const DashboardPage = () => {
   const [showUpcoming, setShowUpcoming] = useState(true);
@@ -228,6 +230,11 @@ const DashboardPage = () => {
             </div>
           </div>
         </div>
+
+        <div className="my-8">
+          <QuestActivityChart />
+        </div>
+        <QuestActivityLog limit={50} />
       </main>
     </div>
   );

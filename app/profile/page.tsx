@@ -5,16 +5,7 @@ import Image from "next/image";
 import { useUserData } from "@/lib/contexts/UserContext";
 import CountUp from "@/components/reactbits/CountUp";
 import { Progress } from "@/components/ui/progress";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { useSupabase } from "@/lib/supabase/SupabaseProvider";
-import { questService, DateUtils } from "@/lib/services";
-import { useEffect, useState } from "react";
-import { QuestLog } from "@/lib/supabase/models";
+import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,11 +17,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import QuestActivityChart from "@/components/QuestActivityChart";
+import QuestActivityLog from "@/components/QuestActivityLog";
 
 export default function ProfilePage() {
   const { user: userData, updateUserData } = useUserData();
-  const { supabase } = useSupabase();
-  const [questLogs, setQuestLogs] = useState<QuestLog[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editedUsername, setEditedUsername] = useState("");
 
@@ -53,26 +44,6 @@ export default function ProfilePage() {
     }
   };
 
-  useEffect(() => {
-    if (!userData || !supabase) return;
-
-    const fetchQuestLogs = async () => {
-      const endDate = DateUtils.now();
-      const startDate = DateUtils.addDays(endDate, -6);
-      startDate.setHours(0, 0, 0, 0);
-
-      const logs = await questService.getQuestLogs(
-        supabase,
-        userData.id,
-        startDate.toISOString(),
-        endDate.toISOString()
-      );
-      setQuestLogs(logs);
-    };
-
-    fetchQuestLogs();
-  }, [userData, supabase]);
-
   if (!userData) {
     return (
       <div className="min-h-screen bg-[#151515]">
@@ -80,47 +51,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const chartData = (() => {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const today = DateUtils.now();
-    const data = [];
-
-    for (let i = 0; i < 7; i++) {
-      const date = DateUtils.addDays(today, i - 6);
-      const dateStr = DateUtils.getLocalDateString(date);
-      const dayName = days[DateUtils.getWeekDayIndex(date)];
-
-      const dayLogs = questLogs.filter(
-        (log) =>
-          DateUtils.getLocalDateString(new Date(log.completed_at)) === dateStr
-      );
-
-      data.push({
-        day: dayName,
-        daily: dayLogs.filter((log) => log.quest_type === "daily").length,
-        weekly: dayLogs.filter((log) => log.quest_type === "weekly").length,
-        onetime: dayLogs.filter((log) => log.quest_type === "onetime").length,
-      });
-    }
-
-    return data;
-  })();
-
-  const chartConfig = {
-    daily: {
-      label: "Daily",
-      color: "#E6C100",
-    },
-    weekly: {
-      label: "Weekly",
-      color: "#e6ad00",
-    },
-    onetime: {
-      label: "One-time",
-      color: "#e69900",
-    },
-  };
 
   return (
     <div className="min-h-screen bg-[#151515]">
@@ -247,94 +177,10 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-jacquard text-[#E6C100] mb-4">
-              Quest Activity
-            </h2>
-            {/* Chart code taken from shadcn */}
-            <ChartContainer config={chartConfig} className="h-[400px] w-full">
-              <AreaChart
-                data={chartData}
-                margin={{
-                  left: 12,
-                  right: 12,
-                }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <defs>
-                  <linearGradient id="fillDaily" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-daily)"
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-daily)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                  <linearGradient id="fillWeekly" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-weekly)"
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-weekly)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                  <linearGradient id="fillOnetime" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-onetime)"
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-onetime)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                </defs>
-                <Area
-                  dataKey="onetime"
-                  type="natural"
-                  fill="url(#fillOnetime)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-onetime)"
-                  stackId="a"
-                />
-                <Area
-                  dataKey="weekly"
-                  type="natural"
-                  fill="url(#fillWeekly)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-weekly)"
-                  stackId="a"
-                />
-                <Area
-                  dataKey="daily"
-                  type="natural"
-                  fill="url(#fillDaily)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-daily)"
-                  stackId="a"
-                />
-              </AreaChart>
-            </ChartContainer>
+          <QuestActivityChart />
+
+          <div className="mt-8">
+            <QuestActivityLog limit={0} />
           </div>
         </div>
       </main>

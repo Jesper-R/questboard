@@ -82,10 +82,12 @@ export interface QuestLog {
   id: string;
   user_id: string;
   quest_id: string;
+  quest_title: string;
   quest_type: "daily" | "weekly" | "onetime";
-  xp_earned: number;
-  coins_earned: number;
-  completed_at: string;
+  action: "created" | "completed" | "deleted" | "expired" | "edited";
+  action_at: string;
+  xp_earned: number | null;
+  coins_earned: number | null;
   created_at: string;
 }
 
