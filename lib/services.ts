@@ -228,6 +228,42 @@ function calculateScheduledFor(quest: Partial<QuestInsert>): string | null {
   }
 }
 
+function calculateExpirationTime(quest: Partial<Quest>): string {
+  const now = DateUtils.now();
+
+  switch (quest.type) {
+    case "daily":
+      if (quest.due_time) {
+        const [hours, minutes] = quest.due_time.split(":").map(Number);
+        const expirationDate = new Date(now);
+        expirationDate.setHours(hours, minutes, 0, 0);
+
+        return expirationDate.toISOString();
+      }
+      break;
+
+    case "weekly":
+      if (quest.due_day) {
+        const questDayIndex = DateUtils.WEEKDAYS.indexOf(quest.due_day);
+        const currentDayIndex = DateUtils.getWeekDayIndex(now);
+        const daysBack = currentDayIndex - questDayIndex;
+        const expirationDate = new Date(now);
+        expirationDate.setDate(now.getDate() - daysBack);
+        expirationDate.setHours(23, 59, 59, 999);
+
+        return expirationDate.toISOString();
+      }
+      break;
+
+    case "onetime":
+      if (quest.due_date) {
+        return new Date(quest.due_date).toISOString();
+      }
+      break;
+  }
+  return DateUtils.nowString();
+}
+
 export const questService = {
   getQuestUrgency(quest: Quest): QuestUrgency {
     if (quest.is_completed || quest.is_expired || quest.scheduled_for) {
@@ -645,7 +681,8 @@ export const questService = {
     questType: "daily" | "weekly" | "onetime",
     action: "created" | "completed" | "deleted" | "expired" | "edited",
     xpEarned?: number,
-    coinsEarned?: number
+    coinsEarned?: number,
+    actionAt?: string
   ): Promise<void> {
     const { error } = await supabase.from("quest_logs").insert({
       user_id: userId,
@@ -653,7 +690,7 @@ export const questService = {
       quest_title: questTitle,
       quest_type: questType,
       action: action,
-      action_at: DateUtils.nowString(),
+      action_at: actionAt || DateUtils.nowString(),
       xp_earned: xpEarned || null,
       coins_earned: coinsEarned || null,
     });
@@ -740,13 +777,17 @@ export const questService = {
 
       for (const quest of quests) {
         if (expiredQuestIds.includes(quest.id)) {
+          const expirationTime = calculateExpirationTime(quest);
           await this.createQuestLog(
             supabase,
             userId,
             quest.id,
             quest.title,
             quest.type,
-            "expired"
+            "expired",
+            undefined,
+            undefined,
+            expirationTime
           );
         }
       }
