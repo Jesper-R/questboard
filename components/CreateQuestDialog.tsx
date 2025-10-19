@@ -152,12 +152,10 @@ export default function CreateQuestDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">Easy (10 XP, 5 coins)</SelectItem>
-                  <SelectItem value="medium">
-                    Medium (25 XP, 10 coins)
-                  </SelectItem>
-                  <SelectItem value="hard">Hard (50 XP, 20 coins)</SelectItem>
-                  <SelectItem value="epic">Epic (100 XP, 50 coins)</SelectItem>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                  <SelectItem value="epic">Epic</SelectItem>
                 </SelectContent>
               </Select>
             </div>

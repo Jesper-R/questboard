@@ -20,7 +20,7 @@ export default function UnicornBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 -z-50">
+    <div className="fixed inset-0 -z-50 hidden md:block">
       {dimensions.width > 0 && dimensions.height > 0 && (
         <UnicornScene
           // Remix of https://www.unicorn.studio/remix/DVuHLBRdBnjYAbk2Dq0T

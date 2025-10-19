@@ -128,8 +128,53 @@ export default function CoinShopDialog({
         <DialogHeader className="sr-only">
           <DialogTitle>Coin Shop</DialogTitle>
         </DialogHeader>
-        <div className="flex h-[85vh]">
-          <div className="w-48 flex flex-col gap-2 border-r p-6">
+        <div className="flex flex-col md:flex-row h-[85vh]">
+          <div className="md:hidden border-b p-4">
+            <h2 className="text-3xl font-jacquard text-[#E6C100] mb-3 text-center">
+              Coin Shop
+            </h2>
+            <div className="flex gap-2 mb-3">
+              <Button
+                variant={selectedCategory === "title" ? "secondary" : "ghost"}
+                onClick={() => setSelectedCategory("title")}
+                className={`flex-1 ${
+                  selectedCategory === "title" ? "text-[#E6C100]" : ""
+                }`}
+              >
+                Titles
+              </Button>
+              <Button
+                variant={selectedCategory === "border" ? "secondary" : "ghost"}
+                onClick={() => setSelectedCategory("border")}
+                className={`flex-1 ${
+                  selectedCategory === "border" ? "text-[#E6C100]" : ""
+                }`}
+              >
+                Borders
+              </Button>
+              <Button
+                variant={selectedCategory === "avatar" ? "secondary" : "ghost"}
+                onClick={() => setSelectedCategory("avatar")}
+                className={`flex-1 ${
+                  selectedCategory === "avatar" ? "text-[#E6C100]" : ""
+                }`}
+              >
+                Avatars
+              </Button>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <Image
+                src="/icons/coin.png"
+                alt="coins"
+                width={24}
+                height={24}
+                style={{ imageRendering: "pixelated" }}
+              />
+              <span className="text-lg font-semibold">{user?.coins}</span>
+            </div>
+          </div>
+
+          <div className="hidden md:flex w-48 flex-col gap-2 border-r p-6">
             <h2 className="text-3xl font-jacquard text-[#E6C100] mb-4 text-center">
               Coin Shop
             </h2>
@@ -170,12 +215,12 @@ export default function CoinShopDialog({
                   height={24}
                   style={{ imageRendering: "pixelated" }}
                 />
-                <span className="text-lg font-semibold ">{user?.coins}</span>
+                <span className="text-lg font-semibold">{user?.coins}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 pr-12">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 md:pr-12">
             {loading ? (
               <p>Loading...</p>
             ) : filteredItems.length === 0 ? (
