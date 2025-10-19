@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserData } from "@/lib/contexts/UserContext";
@@ -26,26 +26,43 @@ export default function Navbar() {
   const isDashboard = pathname.startsWith("/dashboard");
   const isProfile = pathname.startsWith("/profile");
 
+  const currentCoins = userData?.coins || 0;
+  const currentXp = userData?.xp || 0;
+
+  const prevCoinsRef = useRef<number>(currentCoins);
+  const prevXpRef = useRef<number>(currentXp);
+
+  const prevCoins = prevCoinsRef.current;
+  const prevXp = prevXpRef.current;
+
+  useEffect(() => {
+    prevCoinsRef.current = currentCoins;
+    prevXpRef.current = currentXp;
+  });
+
   if (isDashboard || isProfile) {
     return (
       <>
         <nav className="sticky top-0 bg-[#151515] z-50">
           <div className="container mx-auto py-3 px-4 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-4xl font-jacquard text-[#E6C100]">
+              <span
+                onClick={() => router.push("/dashboard")}
+                className="text-4xl font-jacquard text-[#E6C100] cursor-pointer"
+              >
                 <span className="sm:hidden">Q</span>
                 <span className="hidden sm:inline">QuestBoard</span>
               </span>
             </div>
 
             <div
-              className={`flex items-center space-x-4 ${
+              className={`flex items-center sm:space-x-4 ${
                 user && userData ? "opacity-100" : "opacity-0"
               }`}
             >
               {isDashboard ? (
                 <div className={"flex flex-col sm:flex-row gap-1"}>
-                  <div className="flex items-center px-2">
+                  <div className="flex items-center justify-between sm:justify-start px-2 min-w-[80px] sm:min-w-0">
                     <Image
                       src="/icons/xp.png"
                       alt="xp display"
@@ -54,12 +71,13 @@ export default function Navbar() {
                       style={{ imageRendering: "pixelated" }}
                     />
                     <CountUp
-                      to={userData?.xp || 0}
+                      from={prevXp}
+                      to={currentXp}
                       duration={1}
                       className="text-sm font-medium tabular-nums"
                     />
                   </div>
-                  <div className="flex items-center space-x-1 px-2">
+                  <div className="flex items-center justify-between sm:justify-start space-x-1 px-2 min-w-[80px] sm:min-w-0">
                     <Image
                       src="/icons/coin.png"
                       alt="coin display"
@@ -68,7 +86,8 @@ export default function Navbar() {
                       style={{ imageRendering: "pixelated" }}
                     />
                     <CountUp
-                      to={userData?.coins || 0}
+                      from={prevCoins}
+                      to={currentCoins}
                       duration={1}
                       className="text-sm font-medium tabular-nums"
                     />
@@ -78,7 +97,7 @@ export default function Navbar() {
                 <Button
                   variant="outline"
                   onClick={() => router.push("/dashboard")}
-                  className="hover:text-[#E6C100]"
+                  className="hover:text-[#E6C100] hidden sm:flex"
                 >
                   Dashboard
                 </Button>
@@ -132,6 +151,13 @@ export default function Navbar() {
                     </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-50" align="end">
+                    {isProfile && (
+                      <DropdownMenuItem
+                        onClick={() => router.push("/dashboard")}
+                      >
+                        Dashboard
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => setShopOpen(true)}>
                       Coin Shop
                     </DropdownMenuItem>

@@ -59,8 +59,8 @@ export default function ProfilePage() {
 
       <main className="container mx-auto py-8 px-4">
         <div className="space-y-6">
-          <div className="flex items-start gap-3 sm:gap-6">
-            <div className="relative w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-6">
+            <div className="relative w-[140px] h-[140px] sm:w-[140px] sm:h-[140px] flex-shrink-0">
               <Image
                 src={userData?.avatar_path || "/avatars/default.png"}
                 alt="User Avatar"
@@ -78,9 +78,9 @@ export default function ProfilePage() {
                 style={{ imageRendering: "pixelated" }}
               />
             </div>
-            <div className="flex min-h-[100px] sm:h-[140px] py-1 flex-col justify-between flex-1">
+            <div className="flex w-full sm:min-h-[100px] sm:h-[140px] py-1 flex-col justify-between sm:flex-1">
               <div className="space-y-2">
-                <div className="flex justify-start items-baseline gap-3">
+                <div className="flex justify-start items-baseline gap-3 overflow-x-auto">
                   <div className="flex items-center gap-2">
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
@@ -145,7 +145,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-4 sm:mt-0">
                 <div className="flex items-center space-x-2">
                   <Image
                     src="/icons/coin.png"

@@ -245,7 +245,7 @@ export default function EditQuestDialog({
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete Quest"}
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
             <div className="flex gap-2">
               <Button
@@ -260,7 +260,7 @@ export default function EditQuestDialog({
                 className="bg-[#E6C100] text-black hover:bg-[#E6C100]/90"
                 disabled={isSubmitting || !title.trim() || !description.trim()}
               >
-                {isSubmitting ? "Saving..." : "Save Changes"}
+                {isSubmitting ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>
