@@ -59,14 +59,14 @@ export default function ProfilePage() {
 
       <main className="container mx-auto py-8 px-4">
         <div className="space-y-6">
-          <div className="flex items-start gap-6">
-            <div className="relative w-[140px] h-[140px]">
+          <div className="flex items-start gap-3 sm:gap-6">
+            <div className="relative w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] flex-shrink-0">
               <Image
                 src={userData?.avatar_path || "/avatars/default.png"}
                 alt="User Avatar"
                 width={128}
                 height={128}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%]"
                 style={{ imageRendering: "pixelated" }}
               />
               <Image
@@ -74,11 +74,11 @@ export default function ProfilePage() {
                 alt="Avatar Border"
                 width={140}
                 height={140}
-                className="absolute inset-0 pointer-events-none"
+                className="absolute inset-0 pointer-events-none w-full h-full"
                 style={{ imageRendering: "pixelated" }}
               />
             </div>
-            <div className="flex h-[140px] py-1 flex-col justify-between">
+            <div className="flex min-h-[100px] sm:h-[140px] py-1 flex-col justify-between flex-1">
               <div className="space-y-2">
                 <div className="flex justify-start items-baseline gap-3">
                   <div className="flex items-center gap-2">

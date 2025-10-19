@@ -61,7 +61,7 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-[#151515]">
       <Navbar />
       <main className="container mx-auto p-4">
-        <div className="flex items-center justify-start mb-6 gap-2">
+        <div className="flex items-center justify-start mb-6 gap-2 flex-wrap">
           <CreateQuestDialog createQuest={createQuest}>
             <Button variant="outline" className="text-[#E6C100]">
               <Plus />

@@ -36,7 +36,7 @@ export const userService = {
         user_title: user.user_title || "Adventurer",
         level: user.level || 1,
         xp: user.xp || 0,
-        coins: user.coins || 100,
+        coins: user.coins || 50,
         login_streak: user.login_streak || 0,
         daily_streak: user.daily_streak || 0,
         weekly_streak: user.weekly_streak || 0,
