@@ -16,11 +16,11 @@ export default function StreakDisplay({
     if (!userData) return 0;
     switch (type) {
       case "daily":
-        return userData.daily_streak || 0;
+        return userData.daily_streak;
       case "weekly":
-        return userData.weekly_streak || 0;
+        return userData.weekly_streak;
       case "onetime":
-        return userData.onetime_streak || 0;
+        return userData.onetime_streak;
       default:
         return 0;
     }

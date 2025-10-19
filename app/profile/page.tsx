@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import QuestActivityChart from "@/components/QuestActivityChart";
 import QuestActivityLog from "@/components/QuestActivityLog";
+import BadgeCarousel from "@/components/BadgeCarousel";
 
 export default function ProfilePage() {
   const { user: userData, updateUserData } = useUserData();
@@ -154,7 +155,7 @@ export default function ProfilePage() {
                     style={{ imageRendering: "pixelated" }}
                   />
                   <CountUp
-                    to={userData?.coins || 0}
+                    to={userData?.coins}
                     duration={1}
                     className="text-lg font-medium tabular-nums"
                   />
@@ -168,7 +169,7 @@ export default function ProfilePage() {
                     style={{ imageRendering: "pixelated" }}
                   />
                   <CountUp
-                    to={userData?.xp || 0}
+                    to={userData?.xp}
                     duration={1}
                     className="text-lg tabular-nums"
                   />
@@ -176,8 +177,19 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+          <div className="my-8">
+            <h2 className="text-3xl font-jacquard text-[#E6C100] mb-4">
+              Quest Activity (Last 7 Days)
+            </h2>
+            <QuestActivityChart />
+          </div>
 
-          <QuestActivityChart />
+          <div className="my-8">
+            <h2 className="text-3xl text-[#E6C100] mb-4 font-jacquard">
+              Badges
+            </h2>
+            <BadgeCarousel />
+          </div>
 
           <div className="mt-8">
             <QuestActivityLog limit={0} />

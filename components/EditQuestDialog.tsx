@@ -70,11 +70,13 @@ export default function EditQuestDialog({
         due_time: questType === "daily" ? dueTime : undefined,
         due_day: questType === "weekly" ? dueDay : undefined,
         due_date:
-          questType === "onetime" && date ? (() => {
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
-            return endOfDay.toISOString();
-          })() : undefined,
+          questType === "onetime" && date
+            ? (() => {
+                const endOfDay = new Date(date);
+                endOfDay.setHours(23, 59, 59, 999);
+                return endOfDay.toISOString();
+              })()
+            : undefined,
       });
       setOpen(false);
     } catch (error) {
@@ -99,7 +101,7 @@ export default function EditQuestDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="bg-[#1a1a1a]">
+      <DialogContent className="bg-[#1a1919]">
         <DialogHeader>
           <DialogTitle className="text-[#E6C100]">Edit Quest</DialogTitle>
           <DialogDescription className="text-gray-400">

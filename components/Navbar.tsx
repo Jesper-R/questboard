@@ -122,7 +122,7 @@ export default function Navbar() {
                         </span>
                         <div className="flex items-center space-x-1">
                           <span className="text-gray-400 text-xs">
-                            Level {userData?.level || 1}
+                            Level {userData?.level}
                           </span>
                           <span className="text-[#E6C100] text-xs">
                             {userData?.user_title || "Adventurer"}

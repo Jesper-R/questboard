@@ -50,9 +50,7 @@ export default function CoinShopDialog({
       epic: 2,
       legendary: 3,
     };
-    items?.sort(
-      (a, b) => (rarityOrder[a.rarity] || 0) - (rarityOrder[b.rarity] || 0)
-    );
+    items?.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
 
     const { data: inv } = await supabase
       .from("user_inventory")
@@ -74,20 +72,13 @@ export default function CoinShopDialog({
 
   const handlePurchase = async (item: ShopItemType) => {
     if (!supabase || !user) return;
-
-    if (user.coins < item.cost) {
-      alert("Not enough coins!");
-      return;
-    }
+    if (user.coins < item.cost) return;
 
     const { error: inventoryError } = await supabase
       .from("user_inventory")
       .insert({ user_id: user.id, item_id: item.id, is_equipped: false });
 
-    if (inventoryError) {
-      alert("Purchase failed!");
-      return;
-    }
+    if (inventoryError) throw inventoryError;
 
     await updateUserData({ coins: user.coins - item.cost });
 
@@ -105,10 +96,7 @@ export default function CoinShopDialog({
       .update({ is_equipped: true })
       .eq("id", inventoryItem.id);
 
-    if (error) {
-      alert("Equip failed!");
-      return;
-    }
+    if (error) throw error;
 
     const userUpdate: Partial<{
       user_title: string;
@@ -136,7 +124,7 @@ export default function CoinShopDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[1100px] w-[95vw] max-h-[85vh] bg-[#1a1a1a] p-0 overflow-x-hidden">
+      <DialogContent className="!max-w-[1100px] w-[95vw] max-h-[85vh] bg-[#1a1919] p-0 overflow-x-hidden">
         <DialogHeader className="sr-only">
           <DialogTitle>Coin Shop</DialogTitle>
         </DialogHeader>
@@ -182,9 +170,7 @@ export default function CoinShopDialog({
                   height={24}
                   style={{ imageRendering: "pixelated" }}
                 />
-                <span className="text-lg font-semibold ">
-                  {user?.coins || 0}
-                </span>
+                <span className="text-lg font-semibold ">{user?.coins}</span>
               </div>
             </div>
           </div>

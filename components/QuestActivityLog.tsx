@@ -19,6 +19,14 @@ interface QuestActivityLogProps {
   limit?: number;
 }
 
+const actionColors = {
+  created: "bg-blue-500/10 text-blue-500",
+  completed: "bg-green-500/10 text-green-500",
+  edited: "bg-yellow-500/10 text-yellow-500",
+  deleted: "bg-red-500/10 text-red-500",
+  expired: "bg-gray-500/10 text-gray-500",
+};
+
 export default function QuestActivityLog({ limit = 0 }: QuestActivityLogProps) {
   const { user: userData } = useUserData();
   const { supabase } = useSupabase();
@@ -45,23 +53,6 @@ export default function QuestActivityLog({ limit = 0 }: QuestActivityLogProps) {
     };
   }, [userData, supabase]);
 
-  const getActionBadge = (action: string) => {
-    switch (action) {
-      case "created":
-        return "bg-blue-500/10 text-blue-500";
-      case "completed":
-        return "bg-green-500/10 text-green-500";
-      case "edited":
-        return "bg-yellow-500/10 text-yellow-500";
-      case "deleted":
-        return "bg-red-500/10 text-red-500";
-      case "expired":
-        return "bg-gray-500/10 text-gray-500";
-      default:
-        return "bg-gray-500/10 text-gray-500";
-    }
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -76,8 +67,8 @@ export default function QuestActivityLog({ limit = 0 }: QuestActivityLogProps) {
 
   return (
     <div>
-      <h2 className="text-2xl font-jacquard text-[#E6C100] mb-4">Quest Log</h2>
-      <div className="rounded-lg border border-[#2a2a2a] bg-[#1a1a1a]">
+      <h2 className="text-3xl font-jacquard text-[#E6C100] mb-4">Quest Log</h2>
+      <div className="rounded-lg border border-[#2a2a2a] bg-[#1a1919]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -115,9 +106,9 @@ export default function QuestActivityLog({ limit = 0 }: QuestActivityLogProps) {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium uppercase ${getActionBadge(
-                          log.action
-                        )}`}
+                        className={`px-2 py-1 rounded text-xs font-medium uppercase ${
+                          actionColors[log.action]
+                        }`}
                       >
                         {log.action}
                       </span>

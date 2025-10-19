@@ -65,11 +65,13 @@ export default function CreateQuestDialog({
         due_time: questType === "daily" ? time : undefined,
         due_day: questType === "weekly" ? dayOfWeek : undefined,
         due_date:
-          questType === "onetime" && date ? (() => {
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
-            return endOfDay.toISOString();
-          })() : undefined,
+          questType === "onetime" && date
+            ? (() => {
+                const endOfDay = new Date(date);
+                endOfDay.setHours(23, 59, 59, 999);
+                return endOfDay.toISOString();
+              })()
+            : undefined,
       });
 
       setTitle("");
@@ -90,7 +92,7 @@ export default function CreateQuestDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="bg-[#1a1a1a] ">
+      <DialogContent className="bg-[#1a1919]">
         <DialogHeader>
           <DialogTitle className="text-[#E6C100]">Create New Quest</DialogTitle>
           <DialogDescription className="text-gray-400">

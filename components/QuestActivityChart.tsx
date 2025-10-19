@@ -81,16 +81,13 @@ export default function QuestActivityChart() {
 
   return (
     <div>
-      <h2 className="text-2xl font-jacquard text-[#E6C100] mb-4">
-        Quest Activity (Last 7 Days)
-      </h2>
       {/* chart code taken from shadcn with slight tweaks */}
       <ChartContainer config={chartConfig} className="h-[400px] w-full">
         <AreaChart
           data={chartData}
           margin={{
-            left: 12,
-            right: 12,
+            left: 20,
+            right: 20,
           }}
         >
           <CartesianGrid vertical={false} />

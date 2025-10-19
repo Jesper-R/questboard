@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { questService } from "../services";
+import { questService, badgeService } from "../services";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Quest, QuestInsert } from "../supabase/models";
 import { useSupabase } from "../supabase/SupabaseProvider";
@@ -106,6 +106,13 @@ export function useQuests() {
         [streakField]: userData[streakField] + 1,
       });
 
+      try {
+        await badgeService.checkAndAwardBadges(supabase, userData.id);
+        window.dispatchEvent(new CustomEvent("badgesUpdated"));
+      } catch (badgeError) {
+        console.error("Failed to check badges:", badgeError);
+      }
+
       setQuests((prev) =>
         prev.map((quest) => (quest.id === questId ? completedQuest : quest))
       );
@@ -114,7 +121,6 @@ export function useQuests() {
       return completedQuest;
     } catch (err) {
       if (err instanceof Error && err.message.includes("expired")) {
-        console.log("Quest expired");
         loadQuests();
       } else {
         setError(

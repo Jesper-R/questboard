@@ -4,6 +4,8 @@ import {
   Quest,
   QuestInsert,
   QuestLog,
+  Badge,
+  UserBadge,
 } from "./supabase/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -18,9 +20,7 @@ export const userService = {
       .eq("clerk_user_id", clerkUserId)
       .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     return data;
   },
@@ -236,7 +236,7 @@ function calculateExpirationTime(quest: Partial<Quest>): string {
       if (quest.due_time) {
         const [hours, minutes] = quest.due_time.split(":").map(Number);
         const expirationDate = new Date(now);
-        expirationDate.setHours(hours, minutes, 0, 0);
+        expirationDate.setHours(hours, minutes, 59, 999);
 
         return expirationDate.toISOString();
       }
@@ -333,7 +333,6 @@ export const questService = {
           const dueDate = new Date(quest.due_date);
           const msLeft = dueDate.getTime() - now.getTime();
           const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-          console.log("daysleft: " + daysLeft);
           if (daysLeft <= 1) {
             return {
               level: 1,
@@ -376,17 +375,7 @@ export const questService = {
 
       case "weekly":
         if (quest.due_day) {
-          const questDayIndex = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-          ].indexOf(quest.due_day);
-          console.log(currentDayIndex);
-          console.log(questDayIndex);
+          const questDayIndex = DateUtils.WEEKDAYS.indexOf(quest.due_day);
           if (currentDayIndex > questDayIndex) {
             return true;
           }
@@ -414,8 +403,7 @@ export const questService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-
-    return data || [];
+    return data;
   },
 
   async createQuest(
@@ -443,19 +431,11 @@ export const questService = {
     const { data, error } = await supabase
       .from("quests")
       .insert({
-        user_id: quest.user_id,
-        title: quest.title,
-        description: quest.description,
-        type: quest.type,
-        difficulty: quest.difficulty,
-        is_completed: quest.is_completed || false,
-        is_expired: quest.is_expired || isExpired,
-        due_time: quest.due_time || null,
-        due_day: quest.due_day || null,
-        due_date: quest.due_date || null,
-        scheduled_for: quest.scheduled_for || scheduledFor,
-        xp_reward: quest.xp_reward || rewards.xp,
-        coin_reward: quest.coin_reward || rewards.coins,
+        ...quest,
+        is_expired: isExpired,
+        scheduled_for: scheduledFor,
+        xp_reward: quest.xp_reward ?? rewards.xp,
+        coin_reward: quest.coin_reward ?? rewards.coins,
       })
       .select()
       .single();
@@ -616,29 +596,30 @@ export const questService = {
 
     if (userFetchError) {
       console.error("Failed to fetch user for streak update:", userFetchError);
-    } else {
-      const streakUpdates: Partial<User> = {};
+      return data;
+    }
 
-      switch (quest.type) {
-        case "daily":
-          streakUpdates.daily_streak = (user.daily_streak || 0) + 1;
-          break;
-        case "weekly":
-          streakUpdates.weekly_streak = (user.weekly_streak || 0) + 1;
-          break;
-        case "onetime":
-          streakUpdates.onetime_streak = (user.onetime_streak || 0) + 1;
-          break;
-      }
+    const streakUpdates: Partial<User> = {};
 
-      const { error: streakError } = await supabase
-        .from("users")
-        .update(streakUpdates)
-        .eq("id", quest.user_id);
+    switch (quest.type) {
+      case "daily":
+        streakUpdates.daily_streak = user.daily_streak + 1;
+        break;
+      case "weekly":
+        streakUpdates.weekly_streak = user.weekly_streak + 1;
+        break;
+      case "onetime":
+        streakUpdates.onetime_streak = user.onetime_streak + 1;
+        break;
+    }
 
-      if (streakError) {
-        console.error("Failed to update streak:", streakError);
-      }
+    const { error: streakError } = await supabase
+      .from("users")
+      .update(streakUpdates)
+      .eq("id", quest.user_id);
+
+    if (streakError) {
+      console.error("Failed to update streak:", streakError);
     }
 
     return data;
@@ -670,7 +651,7 @@ export const questService = {
     const { data, error } = await query;
 
     if (error) throw error;
-    return data || [];
+    return data;
   },
 
   async createQuestLog(
@@ -736,8 +717,7 @@ export const questService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-
-    return data || [];
+    return data;
   },
 
   async checkAndExpireQuests(
@@ -765,18 +745,20 @@ export const questService = {
     }
 
     if (expiredQuestIds.length > 0) {
-      const { error: updateError } = await supabase
+      const { data: updatedQuests, error: updateError } = await supabase
         .from("quests")
         .update({
           is_expired: true,
           updated_at: DateUtils.nowString(),
         })
-        .in("id", expiredQuestIds);
+        .in("id", expiredQuestIds)
+        .eq("is_expired", false)
+        .select();
 
       if (updateError) throw updateError;
 
-      for (const quest of quests) {
-        if (expiredQuestIds.includes(quest.id)) {
+      if (updatedQuests && updatedQuests.length > 0) {
+        for (const quest of updatedQuests) {
           const expirationTime = calculateExpirationTime(quest);
           await this.createQuestLog(
             supabase,
@@ -922,5 +904,74 @@ export const questService = {
 
       if (updateError) throw updateError;
     }
+  },
+};
+
+export const badgeService = {
+  async getAllBadges(supabase: SupabaseClient): Promise<Badge[]> {
+    const { data, error } = await supabase
+      .from("badges")
+      .select("*")
+      .order("requirement_type", { ascending: true })
+      .order("requirement_value", { ascending: true });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getUserBadges(
+    supabase: SupabaseClient,
+    userId: string
+  ): Promise<UserBadge[]> {
+    const { data, error } = await supabase
+      .from("user_badges")
+      .select("*")
+      .eq("user_id", userId)
+      .order("earned_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async checkAndAwardBadges(
+    supabase: SupabaseClient,
+    userId: string
+  ): Promise<UserBadge[]> {
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (userError) throw userError;
+    if (!user) throw new Error("User not found");
+
+    const badges = await this.getAllBadges(supabase);
+    const earnedBadges = await this.getUserBadges(supabase, userId);
+    const earnedBadgeIds = earnedBadges.map((ub) => ub.badge_id);
+    const newlyEarnedBadges: UserBadge[] = [];
+
+    for (const badge of badges) {
+      if (earnedBadgeIds.includes(badge.id)) continue;
+
+      if (user[badge.requirement_type] >= badge.requirement_value) {
+        const { data: newBadge, error: insertError } = await supabase
+          .from("user_badges")
+          .insert({
+            user_id: userId,
+            badge_id: badge.id,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Failed to award badge:", insertError);
+        } else if (newBadge) {
+          newlyEarnedBadges.push(newBadge);
+        }
+      }
+    }
+
+    return newlyEarnedBadges;
   },
 };

@@ -22,18 +22,9 @@ const difficultyColors = {
 };
 
 const urgencyStyles = {
-  1: {
-    label: "border-red-500 bg-red-500/10 text-red-400",
-    border: "border-red-500",
-  },
-  2: {
-    label: "border-orange-500 bg-orange-500/10 text-orange-400",
-    border: "border-orange-500",
-  },
-  3: {
-    label: "border-yellow-500 bg-yellow-500/10 text-yellow-400",
-    border: "border-yellow-500",
-  },
+  1: "border-red-500 bg-red-500/10 text-red-400",
+  2: "border-orange-500 bg-orange-500/10 text-orange-400",
+  3: "border-yellow-500 bg-yellow-500/10 text-yellow-400",
 };
 
 export default function QuestCard({
@@ -73,7 +64,7 @@ export default function QuestCard({
           {urgency.level && (
             <div
               className={`leading-tight rounded-2xl px-2 py-0.5 text-xs font-semibold ${
-                urgencyStyles[urgency.level].label
+                urgencyStyles[urgency.level]
               }`}
             >
               {urgency.label}

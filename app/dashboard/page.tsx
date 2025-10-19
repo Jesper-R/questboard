@@ -11,6 +11,7 @@ import { Quest } from "@/lib/supabase/models";
 import StreakDisplay from "@/components/StreakDisplay";
 import QuestActivityChart from "@/components/QuestActivityChart";
 import QuestActivityLog from "@/components/QuestActivityLog";
+import BadgeCarousel from "@/components/BadgeCarousel";
 
 const DashboardPage = () => {
   const [showUpcoming, setShowUpcoming] = useState(true);
@@ -232,8 +233,17 @@ const DashboardPage = () => {
         </div>
 
         <div className="my-8">
+          <h2 className="text-3xl font-jacquard text-[#E6C100] mb-4">
+            Quest Activity (Last 7 Days)
+          </h2>
           <QuestActivityChart />
         </div>
+
+        <div className="my-8">
+          <h2 className="text-3xl text-[#E6C100] mb-4 font-jacquard">Badges</h2>
+          <BadgeCarousel />
+        </div>
+
         <QuestActivityLog limit={50} />
       </main>
     </div>

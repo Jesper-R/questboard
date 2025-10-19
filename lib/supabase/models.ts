@@ -108,3 +108,31 @@ export interface UserInventory {
   item_id: string;
   is_equipped: boolean;
 }
+
+export interface Badge {
+  id: string;
+  name: string;
+  icon_path: string;
+  requirement: string;
+  requirement_type:
+    | "quests_completed"
+    | "daily_quests_completed"
+    | "weekly_quests_completed"
+    | "onetime_quests_completed"
+    | "daily_streak"
+    | "weekly_streak"
+    | "onetime_streak"
+    | "level"
+    | "xp"
+    | "coins";
+  requirement_value: number;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  created_at: string;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+}
