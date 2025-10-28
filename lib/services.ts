@@ -854,9 +854,9 @@ export const questService = {
       if (quest.type === "daily") {
         if (quest.completed_at || quest.updated_at) {
           const lastActionDate = quest.completed_at || quest.updated_at;
-          const lastActionDateStr = new Date(lastActionDate)
-            .toISOString()
-            .split("T")[0];
+          const lastActionDateStr = getLocalDateString(
+            new Date(lastActionDate)
+          );
 
           if (lastActionDateStr < currentDateStr) {
             shouldRefresh = true;
