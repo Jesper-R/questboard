@@ -3,6 +3,12 @@
 
 How to run application locally. (A version is hosted on https://questboard.dev/)
 
+## Install Node Modules
+
+Install Node Modules
+```bash
+  npm install
+```
 
 ## Running Tests
 
@@ -15,11 +21,6 @@ How to run application locally. (A version is hosted on https://questboard.dev/)
 
 ## Running Application
 
-Install Node Modules
-```bash
-  npm install
-```
-Run Application
 ```bash
   npm run dev
 ```
